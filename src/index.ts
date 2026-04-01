@@ -1,42 +1,28 @@
-/**
- * Custom Plugin Entry Point
- *
- * This file is where you can define custom actions, providers, and evaluators
- * for your ElizaOS agent. Add your logic here and reference this plugin in
- * your character file.
- *
- * ElizaOS Plugin Docs: https://elizaos.github.io/eliza/docs/core/plugins
- */
+import type { Plugin } from '@elizaos/core';
+import * as migrations from './db/migrations.js';
+import { AgentStateService } from './services/agent-state-service.js';
+import { WalletService } from './services/wallet-service.js';
+import { LogDecisionOnChain } from './actions/log-decision-on-chain.js';
+import { ConstitutionProvider } from './providers/constitution-provider.js';
+import { PortfolioProvider } from './providers/portfolio-provider.js';
+import { YieldRatesProvider } from './providers/yield-rates-provider.js';
+import { TrustScoreProvider } from './providers/trust-score-provider.js';
+import { GradeSuggestionEvaluator } from './evaluators/grade-suggestion-evaluator.js';
+import { TrustLadderEvaluator } from './evaluators/trust-ladder-evaluator.js';
+import { CrisisTriggerEvaluator } from './evaluators/crisis-trigger-evaluator.js';
 
-import { type Plugin } from "@elizaos/core";
-
-/**
- * Example custom action.
- * Replace this with your own action logic.
- */
-const exampleAction = {
-  name: "EXAMPLE_ACTION",
-  description: "An example action — replace with your own.",
-  similes: ["DEMO", "SAMPLE"],
-  validate: async () => true,
-  handler: async (_runtime: unknown, message: { content: { text: string } }) => {
-    console.log("Custom action triggered with message:", message.content.text);
-    return true;
+export const nostraPlugin: Plugin = {
+  name: 'nostra',
+  description: 'Nostra — constitutional financial agent on Nosana',
+  init: async (_config: unknown, runtime: unknown) => {
+    const rt = runtime as { db: Parameters<typeof AgentStateService.init>[0] };
+    migrations.run(rt.db);
+    await AgentStateService.init(rt.db);
+    WalletService.init();
   },
-  examples: [],
+  providers: [ConstitutionProvider, PortfolioProvider, YieldRatesProvider, TrustScoreProvider],
+  actions: [LogDecisionOnChain],
+  evaluators: [GradeSuggestionEvaluator, TrustLadderEvaluator, CrisisTriggerEvaluator],
 };
 
-/**
- * Your custom plugin.
- * Add this plugin's name to the `plugins` array in your character file
- * to activate it.
- */
-export const customPlugin: Plugin = {
-  name: "custom-plugin",
-  description: "My custom ElizaOS plugin",
-  actions: [exampleAction],
-  providers: [],
-  evaluators: [],
-};
-
-export default customPlugin;
+export default nostraPlugin;

@@ -1,20 +1,27 @@
 {
-  "name": "nosana-eliza-agent",
+  "name": "nostra",
   "version": "0.1.0",
   "private": true,
   "type": "module",
   "scripts": {
     "start": "elizaos start --character ./characters/agent.character.json",
-    "dev": "elizaos dev --character ./characters/agent.character.json"
+    "dev": "elizaos dev --character ./characters/agent.character.json",
+    "build": "tsc",
+    "test": "bun test --path-ignore-patterns dist/"
   },
   "dependencies": {
     "@elizaos/core": "^1.0.0",
-    "@elizaos/plugin-anthropic": "^1.5.12",
     "@elizaos/plugin-bootstrap": "^1.0.0",
-    "@elizaos/plugin-openai": "^1.0.0"
+    "@elizaos/plugin-openai": "^1.0.0",
+    "@elizaos/plugin-sql": "^1.0.0",
+    "@elizaos/plugin-telegram": "^1.0.0",
+    "@solana/web3.js": "^1.98.0",
+    "better-sqlite3": "^12.8.0",
+    "bs58": "^6.0.0"
   },
   "devDependencies": {
     "@elizaos/cli": "^1.0.0",
+    "@types/better-sqlite3": "^7.6.0",
     "typescript": "^5.0.0"
   }
 }
