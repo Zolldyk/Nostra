@@ -9,7 +9,8 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 
-# Environment files
+# Environment files — never bake secrets into image (NFR6)
+.env
 .env.local
 .env.example
 .env.*.local
@@ -49,3 +50,8 @@ coverage/
 .nyc_output/
 *.test.js
 *.spec.js
+*.test.ts
+
+# BMAD / Claude artifacts
+_bmad-output/
+.claude/

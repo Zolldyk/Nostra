@@ -2,12 +2,8 @@
 
 FROM node:23-slim AS base
 
-# Install system dependencies needed for native modules (e.g. better-sqlite3)
 RUN apt-get update && apt-get install -y \
-  python3 \
-  make \
-  g++ \
-  git \
+  python3 make g++ git curl unzip \
   && rm -rf /var/lib/apt/lists/*
 
 # Disable telemetry
@@ -16,22 +12,29 @@ ENV DO_NOT_TRACK=1
 
 WORKDIR /app
 
-# Install pnpm
-RUN npm install -g pnpm
+# Install bun
+RUN npm install -g bun
 
-# Copy package manifest and install dependencies
-COPY package.json ./
-RUN pnpm install
+# Copy package manifest and lockfile, install dependencies
+COPY package.json bun.lock* ./
+RUN bun install
 
 # Copy all source files
 COPY . .
 
-# Create data directory for SQLite
+# Compile TypeScript — produces dist/src/index.js (entry point for elizaos loadProject)
+RUN bun run build
+
+# Create data directory for SQLite volume mount
 RUN mkdir -p /app/data
 
 EXPOSE 3000
 
+# Health check — triggers restart if port 3000 is unresponsive for 30s
+HEALTHCHECK --interval=30s --timeout=30s --retries=3 --start-period=60s \
+  CMD curl -f http://localhost:3000 || exit 1
+
 ENV NODE_ENV=production
 ENV SERVER_PORT=3000
 
-CMD ["pnpm", "start"]
+CMD ["bun", "start"]

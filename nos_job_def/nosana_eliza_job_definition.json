@@ -2,13 +2,21 @@
   "ops": [
     {
       "id": "agent",
+      "type": "container/run",
       "args": {
-        "image": "yourusername/nostra:latest",
+        "image": "zolldyck/nostra:latest",
         "expose": 3000,
         "volumes": [
           { "name": "nostra-data", "dest": "/app/data" }
         ],
         "restart": { "policy": "always" },
+        "healthCheck": {
+          "test": ["CMD-SHELL", "curl -f http://localhost:3000 || exit 1"],
+          "interval": 30,
+          "timeout": 30,
+          "retries": 3,
+          "startPeriod": 60
+        },
         "env": {
           "OPENAI_API_KEY": "nosana",
           "OPENAI_API_URL": "https://3gsrmj6gchzyws9bnc835apd4fh6t5tyeppmbxmzrzhn.node.k8s.prd.nos.ci/v1",
@@ -16,14 +24,20 @@
           "SERVER_PORT": "3000",
           "SOLANA_NETWORK": "devnet",
           "SQLITE_PATH": "/app/data/nostra.db",
-          "NODE_ENV": "production"
+          "NODE_ENV": "production",
+          "TELEGRAM_BOT_TOKEN": "$TELEGRAM_BOT_TOKEN",
+          "SOLANA_PRIVATE_KEY": "$SOLANA_PRIVATE_KEY",
+          "ALCHEMY_RPC_URL": "$ALCHEMY_RPC_URL",
+          "NOSANA_API_KEY": "$NOSANA_API_KEY"
         }
       },
       "execution": {
         "group": "run"
-      },
-      "type": "container/run"
+      }
     }
   ],
+  "global": {
+    "market": "nvidia-rtx-4090"
+  },
   "version": "0.1"
 }
