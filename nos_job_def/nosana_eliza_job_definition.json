@@ -1,4 +1,5 @@
 {
+  "type": "container",
   "ops": [
     {
       "id": "agent",
@@ -9,14 +10,6 @@
         "volumes": [
           { "name": "nostra-data", "dest": "/app/data" }
         ],
-        "restart": { "policy": "always" },
-        "healthCheck": {
-          "test": ["CMD-SHELL", "curl -f http://localhost:3000 || exit 1"],
-          "interval": 30,
-          "timeout": 30,
-          "retries": 3,
-          "startPeriod": 60
-        },
         "env": {
           "OPENAI_API_KEY": "nosana",
           "OPENAI_API_URL": "https://3gsrmj6gchzyws9bnc835apd4fh6t5tyeppmbxmzrzhn.node.k8s.prd.nos.ci/v1",
@@ -30,14 +23,11 @@
           "ALCHEMY_RPC_URL": "$ALCHEMY_RPC_URL",
           "NOSANA_API_KEY": "$NOSANA_API_KEY"
         }
-      },
-      "execution": {
-        "group": "run"
       }
     }
   ],
-  "global": {
-    "market": "nvidia-rtx-4090"
-  },
-  "version": "0.1"
+  "version": "0.1",
+"meta": {
+  "market": "nvidia-4090"
+}
 }
