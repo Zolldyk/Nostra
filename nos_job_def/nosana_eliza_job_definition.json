@@ -12,8 +12,8 @@
         ],
         "env": {
           "OPENAI_API_KEY": "nosana",
-          "OPENAI_API_URL": "https://3gsrmj6gchzyws9bnc835apd4fh6t5tyeppmbxmzrzhn.node.k8s.prd.nos.ci/v1",
-          "MODEL_NAME": "Qwen3.5-27B-AWQ-4bit",
+          "OPENAI_API_URL": "https://4ksj3tve5bazqwkuyqdhwdpcar4yutcuxphwhckrdxmu.node.k8s.prd.nos.ci/v1",
+          "MODEL_NAME": "Qwen/Qwen3.5-4B",
           "SERVER_PORT": "3000",
           "SOLANA_NETWORK": "devnet",
           "SQLITE_PATH": "/app/data/nostra.db",

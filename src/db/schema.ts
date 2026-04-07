@@ -7,6 +7,8 @@ CREATE TABLE IF NOT EXISTS agent_state (
   constitution_version INTEGER NOT NULL DEFAULT 0,
   accuracy_score REAL NOT NULL DEFAULT 0,
   suggestions_sampled INTEGER NOT NULL DEFAULT 0,
+  onboarding_state TEXT NOT NULL DEFAULT 'pending',
+  referral_source TEXT,
   updated_at TEXT NOT NULL
 )`;
 
@@ -45,10 +47,20 @@ CREATE TABLE IF NOT EXISTS trust_ladder_log (
   created_at TEXT NOT NULL
 )`;
 
+export const CREATE_ONBOARDING_SESSION = `
+CREATE TABLE IF NOT EXISTS onboarding_session (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  role TEXT NOT NULL CHECK(role IN ('agent', 'user')),
+  content TEXT NOT NULL,
+  phase TEXT NOT NULL DEFAULT 'questions',
+  created_at TEXT NOT NULL
+)`;
+
 export const ALL_SCHEMAS = [
   CREATE_AGENT_STATE,
   CREATE_CONSTITUTION,
   CREATE_CONSTITUTION_RULES,
   CREATE_ON_CHAIN_MEMOS,
   CREATE_TRUST_LADDER_LOG,
+  CREATE_ONBOARDING_SESSION,
 ] as const;

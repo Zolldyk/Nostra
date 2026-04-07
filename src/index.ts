@@ -6,6 +6,14 @@ import * as migrations from './db/migrations.js';
 import { AgentStateService } from './services/agent-state-service.js';
 import { WalletService } from './services/wallet-service.js';
 import { LogDecisionOnChain } from './actions/log-decision-on-chain.js';
+import { HandleStartCommand } from './actions/handle-start-command.js';
+import { HandleConstitutionCommand } from './actions/handle-constitution-command.js';
+import { HandleStatusCommand } from './actions/handle-status-command.js';
+import { HandleHistoryCommand } from './actions/handle-history-command.js';
+import { HandlePauseCommand } from './actions/handle-pause-command.js';
+import { SocraticOnboardingAction } from './actions/socratic-onboarding.js';
+import { ParseConstitutionAction } from './actions/parse-constitution.js';
+import { GenerateReferralLinkAction } from './actions/generate-referral-link.js';
 import { ConstitutionProvider } from './providers/constitution-provider.js';
 import { PortfolioProvider } from './providers/portfolio-provider.js';
 import { YieldRatesProvider } from './providers/yield-rates-provider.js';
@@ -26,7 +34,17 @@ const nostraPlugin: Plugin = {
     WalletService.init();
   },
   providers: [ConstitutionProvider, PortfolioProvider, YieldRatesProvider, TrustScoreProvider],
-  actions: [LogDecisionOnChain],
+  actions: [
+    HandleStartCommand,
+    HandleConstitutionCommand,
+    HandleStatusCommand,
+    HandleHistoryCommand,
+    HandlePauseCommand,
+    SocraticOnboardingAction,
+    ParseConstitutionAction,
+    GenerateReferralLinkAction,
+    LogDecisionOnChain,
+  ],
   evaluators: [GradeSuggestionEvaluator, TrustLadderEvaluator, CrisisTriggerEvaluator],
 };
 

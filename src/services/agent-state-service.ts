@@ -16,6 +16,8 @@ const DEFAULT_STATE: Omit<AgentState, 'updatedAt'> = {
   constitutionVersion: 0,
   accuracyScore: 0,
   suggestionsSampled: 0,
+  onboardingState: 'pending',
+  referralSource: undefined,
 };
 
 class AgentStateServiceImpl {
@@ -53,8 +55,9 @@ class AgentStateServiceImpl {
     const s = this.state!;
     db.prepare(`
       INSERT INTO agent_state
-        (id, mode, trust_ladder, crisis_status, constitution_version, accuracy_score, suggestions_sampled, updated_at)
-      VALUES (1, ?, ?, ?, ?, ?, ?, ?)
+        (id, mode, trust_ladder, crisis_status, constitution_version, accuracy_score,
+         suggestions_sampled, onboarding_state, referral_source, updated_at)
+      VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       ON CONFLICT(id) DO UPDATE SET
         mode = excluded.mode,
         trust_ladder = excluded.trust_ladder,
@@ -62,6 +65,8 @@ class AgentStateServiceImpl {
         constitution_version = excluded.constitution_version,
         accuracy_score = excluded.accuracy_score,
         suggestions_sampled = excluded.suggestions_sampled,
+        onboarding_state = excluded.onboarding_state,
+        referral_source = excluded.referral_source,
         updated_at = excluded.updated_at
     `).run(
       s.mode,
@@ -70,6 +75,8 @@ class AgentStateServiceImpl {
       s.constitutionVersion,
       s.accuracyScore,
       s.suggestionsSampled,
+      s.onboardingState,
+      s.referralSource ?? null,
       s.updatedAt,
     );
   }
@@ -82,6 +89,8 @@ class AgentStateServiceImpl {
       constitutionVersion: row['constitution_version'] as number,
       accuracyScore: row['accuracy_score'] as number,
       suggestionsSampled: row['suggestions_sampled'] as number,
+      onboardingState: (row['onboarding_state'] ?? 'pending') as AgentState['onboardingState'],
+      referralSource: (row['referral_source'] as string | undefined) ?? undefined,
       updatedAt: row['updated_at'] as string,
     };
   }

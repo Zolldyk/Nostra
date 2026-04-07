@@ -1,0 +1,1176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nostra — UX Design Directions</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --navy: #1A1A2E;
+    --midnight: #16213E;
+    --gold: #E8B86D;
+    --teal: #14C9A0;
+    --parchment: #F5F0E8;
+    --warm-white: #F0EDE8;
+    --warm-grey: #9B9589;
+    --warm-grey-safe: rgba(240,237,232,0.7); /* AA-compliant alternative for body text */
+    --green: #4CAF82;
+    --amber: #F0A843;
+    --red: #E05C5C;
+    --font-display: 'Plus Jakarta Sans', sans-serif;
+    --font-body: 'Inter', sans-serif;
+    --font-mono: 'IBM Plex Mono', monospace;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--navy);
+    color: var(--warm-white);
+    font-family: var(--font-body);
+    line-height: 1.6;
+    text-align: left;
+    overflow-x: hidden;
+  }
+
+  pre, code { overflow-x: auto; }
+
+  /* NAV */
+  nav {
+    position: sticky;
+    top: 0;
+    background: rgba(13,13,26,0.95);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid rgba(232,184,109,0.15);
+    padding: 16px 40px;
+    display: flex;
+    align-items: center;
+    gap: 32px;
+    z-index: 100;
+  }
+  nav .logo {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 18px;
+    color: var(--gold);
+    letter-spacing: -0.3px;
+  }
+  nav .logo span { color: var(--warm-grey-safe); font-weight: 400; font-size: 13px; margin-left: 8px; }
+  nav a {
+    font-size: 13px;
+    color: var(--warm-grey-safe);
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+  nav a:hover { color: var(--gold); }
+
+  /* SECTIONS */
+  section {
+    padding: 80px 40px;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+  section:nth-of-type(even) {
+    background: var(--midnight);
+    max-width: 100%;
+    padding-left: 0;
+    padding-right: 0;
+  }
+  section:nth-of-type(even) > * {
+    max-width: 1200px;
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: 40px;
+    padding-right: 40px;
+  }
+  .section-alt {
+    background: var(--midnight);
+  }
+  .section-label {
+    font-family: var(--font-mono);
+    font-size: 13px; /* minimum 13px for mono */
+    color: var(--gold);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+  h2 {
+    font-family: var(--font-display);
+    font-size: 32px;
+    font-weight: 700;
+    color: var(--warm-white);
+    letter-spacing: -0.5px;
+    margin-bottom: 8px;
+  }
+  .subtitle {
+    font-size: 16px;
+    color: var(--warm-grey-safe);
+    margin-bottom: 48px;
+    max-width: 560px;
+  }
+
+  /* DIRECTION 1 — HERO / README BANNER */
+  .direction-hero {
+    background: linear-gradient(135deg, var(--navy) 0%, var(--midnight) 60%, #1a2540 100%);
+    border-radius: 16px;
+    padding: 64px;
+    border: 1px solid rgba(232,184,109,0.1);
+    margin-bottom: 32px;
+    position: relative;
+    overflow: hidden;
+  }
+  .direction-hero::before {
+    content: '';
+    position: absolute;
+    top: -80px; right: -80px;
+    width: 320px; height: 320px;
+    background: radial-gradient(circle, rgba(232,184,109,0.06) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .direction-hero .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(20,201,160,0.12);
+    border: 1px solid rgba(20,201,160,0.3);
+    color: var(--teal);
+    font-family: var(--font-mono);
+    font-size: 13px; /* minimum 13px for mono */
+    padding: 4px 10px;
+    border-radius: 4px;
+    margin-bottom: 24px;
+  }
+  .direction-hero h1 {
+    font-family: var(--font-display);
+    font-size: 48px;
+    font-weight: 700;
+    color: var(--warm-white);
+    letter-spacing: -1px;
+    line-height: 1.1;
+    margin-bottom: 8px;
+  }
+  .direction-hero h1 span { color: var(--gold); }
+  .direction-hero .tagline {
+    font-size: 18px;
+    color: var(--warm-grey-safe);
+    margin-bottom: 32px;
+    font-style: italic;
+  }
+  .direction-hero .tagline em { color: var(--warm-white); font-style: normal; }
+  .cta-row { display: flex; gap: 12px; flex-wrap: wrap; }
+  .btn-primary {
+    background: var(--gold);
+    color: var(--navy);
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 14px;
+    padding: 12px 24px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    transition: opacity 0.2s;
+  }
+  .btn-primary:hover { opacity: 0.9; }
+  .btn-secondary {
+    background: transparent;
+    color: var(--warm-white);
+    font-family: var(--font-display);
+    font-weight: 500;
+    font-size: 14px;
+    padding: 12px 24px;
+    border-radius: 8px;
+    border: 1px solid rgba(240,237,232,0.2);
+    cursor: pointer;
+    transition: border-color 0.2s;
+  }
+  .btn-secondary:hover { border-color: var(--gold); color: var(--gold); }
+
+  /* STATS ROW */
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-bottom: 32px;
+  }
+  .stat-card {
+    background: var(--midnight);
+    border: 1px solid rgba(232,184,109,0.08);
+    border-radius: 12px;
+    padding: 24px;
+  }
+  .stat-card .stat-label {
+    font-family: var(--font-mono);
+    font-size: 13px; /* minimum 13px for mono */
+    color: var(--warm-grey-safe);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+  .stat-card .stat-value {
+    font-family: var(--font-display);
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--gold);
+    margin-bottom: 4px;
+  }
+  .stat-card .stat-sub {
+    font-size: 13px;
+    color: var(--warm-grey-safe);
+  }
+
+  /* DIRECTION 2 — TELEGRAM MESSAGE MOCKUPS */
+  .direction-label {
+    font-family: var(--font-display);
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--warm-grey-safe);
+    margin-bottom: 20px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+  }
+
+  .telegram-window {
+    background: #212121;
+    border-radius: 16px;
+    overflow: hidden;
+    border: 1px solid rgba(255,255,255,0.06);
+    margin-bottom: 24px;
+  }
+  .telegram-header {
+    background: #2B2B2B;
+    padding: 14px 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+  }
+  .telegram-avatar {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--gold), var(--amber));
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px;
+  }
+  .telegram-name {
+    font-family: var(--font-body);
+    font-weight: 600;
+    font-size: 14px;
+    color: #E0E0E0;
+  }
+  .telegram-status {
+    font-size: 12px;
+    color: var(--teal);
+  }
+  .telegram-body {
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    background: #1C1C1E;
+  }
+
+  /* Message bubbles */
+  .msg {
+    max-width: 88%;
+    padding: 12px 16px;
+    border-radius: 12px;
+    font-size: 14px;
+    line-height: 1.55;
+    position: relative;
+  }
+  .msg.agent {
+    background: #2B2B3A;
+    border: 1px solid rgba(232,184,109,0.08);
+    color: #E0DDD8;
+    align-self: flex-start;
+    border-radius: 4px 12px 12px 12px;
+  }
+  .msg.user {
+    background: #1E3A5F;
+    color: #D0E8FF;
+    align-self: flex-end;
+    border-radius: 12px 4px 12px 12px;
+  }
+  .msg .msg-time {
+    font-size: 10px;
+    color: rgba(255,255,255,0.3);
+    margin-top: 4px;
+    text-align: right;
+  }
+  .msg strong { color: var(--gold); }
+  .msg .mono { font-family: var(--font-mono); font-size: 13px; color: var(--teal); }
+  .msg .tag-sim { color: var(--amber); font-weight: 600; }
+  .msg .tag-live { color: var(--teal); font-weight: 600; }
+  .msg .tag-crisis { color: var(--red); font-weight: 700; }
+  .msg .compliance { color: var(--green); font-family: var(--font-mono); font-size: 13px; }
+
+  /* Inline buttons */
+  .msg-buttons {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 10px;
+  }
+  .msg-btn {
+    background: rgba(232,184,109,0.12);
+    border: 1px solid rgba(232,184,109,0.25);
+    color: var(--gold);
+    font-size: 12px;
+    font-family: var(--font-body);
+    padding: 6px 14px;
+    border-radius: 6px;
+    cursor: pointer;
+  }
+  .msg-btn.green {
+    background: rgba(76,175,130,0.12);
+    border-color: rgba(76,175,130,0.3);
+    color: var(--green);
+  }
+  .msg-btn.red {
+    background: rgba(224,92,92,0.12);
+    border-color: rgba(224,92,92,0.3);
+    color: var(--red);
+  }
+  .msg-btn.teal {
+    background: rgba(20,201,160,0.12);
+    border-color: rgba(20,201,160,0.3);
+    color: var(--teal);
+  }
+  .msg .explorer-link {
+    display: inline-block;
+    margin-top: 8px;
+    font-family: var(--font-mono);
+    font-size: 13px; /* minimum 13px for mono */
+    color: var(--teal);
+    background: rgba(20,201,160,0.08);
+    border: 1px solid rgba(20,201,160,0.2);
+    padding: 4px 10px;
+    border-radius: 4px;
+  }
+
+  /* DIRECTION 3 — CONSTITUTION CARD */
+  .constitution-card {
+    background: var(--midnight);
+    border: 1px solid rgba(232,184,109,0.15);
+    border-radius: 16px;
+    padding: 32px;
+    margin-bottom: 24px;
+  }
+  .constitution-card .const-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+  }
+  .constitution-card .const-title {
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 16px;
+    color: var(--warm-white);
+  }
+  .constitution-card .const-badge {
+    font-family: var(--font-mono);
+    font-size: 13px; /* minimum 13px for mono */
+    background: rgba(76,175,130,0.12);
+    color: var(--green);
+    border: 1px solid rgba(76,175,130,0.25);
+    padding: 3px 10px;
+    border-radius: 4px;
+  }
+  .const-rule {
+    display: flex;
+    gap: 16px;
+    padding: 14px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+  }
+  .const-rule:last-child { border-bottom: none; }
+  .rule-num {
+    font-family: var(--font-mono);
+    font-size: 13px; /* minimum 13px for mono */
+    color: var(--gold);
+    min-width: 56px;
+    padding-top: 1px;
+  }
+  .rule-text {
+    font-size: 14px;
+    color: var(--warm-white);
+    line-height: 1.5;
+  }
+  .rule-text .rule-meta {
+    font-size: 13px;
+    color: var(--warm-grey-safe);
+    margin-top: 3px;
+    font-family: var(--font-mono);
+  }
+
+  /* DIRECTION 4 — TRUST LADDER */
+  .trust-ladder {
+    background: var(--midnight);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 16px;
+    padding: 32px;
+    margin-bottom: 24px;
+  }
+  .trust-ladder h3 {
+    font-family: var(--font-display);
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--warm-white);
+    margin-bottom: 24px;
+  }
+  .ladder-track {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+  .ladder-step {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    padding: 16px 0;
+    position: relative;
+  }
+  .ladder-step:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    left: 19px;
+    top: 48px;
+    bottom: -8px;
+    width: 2px;
+    background: rgba(255,255,255,0.06);
+  }
+  .ladder-dot {
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px;
+    flex-shrink: 0;
+    position: relative;
+    z-index: 1;
+  }
+  .ladder-dot.done { background: rgba(76,175,130,0.2); border: 2px solid var(--green); }
+  .ladder-dot.active { background: rgba(232,184,109,0.15); border: 2px solid var(--gold); }
+  .ladder-dot.pending { background: rgba(255,255,255,0.04); border: 2px solid rgba(255,255,255,0.1); }
+  .ladder-info { flex: 1; padding-top: 6px; }
+  .ladder-name {
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 14px;
+    color: var(--warm-white);
+    margin-bottom: 3px;
+  }
+  .ladder-desc { font-size: 13px; color: var(--warm-grey-safe); }
+  .ladder-progress {
+    margin-top: 8px;
+    background: rgba(255,255,255,0.05);
+    border-radius: 4px;
+    height: 4px;
+    overflow: hidden;
+  }
+  .ladder-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--gold), var(--amber));
+    border-radius: 4px;
+  }
+
+  /* DIRECTION 5 — MORNING BRIEFING */
+  .briefing-card {
+    background: linear-gradient(135deg, #1E2A40 0%, var(--midnight) 100%);
+    border: 1px solid rgba(232,184,109,0.12);
+    border-radius: 16px;
+    padding: 32px;
+    margin-bottom: 24px;
+  }
+  .briefing-card .brief-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+  .briefing-card .brief-emoji { font-size: 24px; }
+  .briefing-card .brief-title {
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 16px;
+    color: var(--warm-white);
+  }
+  .briefing-card .brief-date {
+    font-family: var(--font-mono);
+    font-size: 13px; /* minimum 13px for mono */
+    color: var(--warm-grey-safe);
+    margin-left: auto;
+  }
+  .brief-section {
+    margin-bottom: 20px;
+  }
+  .brief-section h4 {
+    font-family: var(--font-mono);
+    font-size: 13px; /* minimum 13px for mono */
+    color: var(--gold);
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+  .yield-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+  }
+  .yield-rank {
+    font-family: var(--font-mono);
+    font-size: 13px; /* minimum 13px for mono */
+    color: var(--warm-grey-safe);
+    min-width: 20px;
+  }
+  .yield-name { font-size: 14px; color: var(--warm-white); flex: 1; }
+  .yield-apy {
+    font-family: var(--font-mono);
+    font-size: 14px;
+    color: var(--green);
+    font-weight: 500;
+  }
+  .yield-note { font-size: 13px; color: var(--warm-grey-safe); margin-top: 2px; }
+
+  /* DIRECTION 6 — CRISIS PROTOCOL */
+  .crisis-card {
+    background: linear-gradient(135deg, #2A1A1A 0%, #1E1A2E 100%);
+    border: 1px solid rgba(224,92,92,0.25);
+    border-radius: 16px;
+    padding: 32px;
+    margin-bottom: 24px;
+    position: relative;
+  }
+  .crisis-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--red), var(--amber));
+    border-radius: 16px 16px 0 0;
+  }
+  .crisis-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  .crisis-icon {
+    width: 44px; height: 44px;
+    border-radius: 50%;
+    background: rgba(224,92,92,0.15);
+    border: 2px solid rgba(224,92,92,0.4);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px;
+  }
+  .crisis-title {
+    font-weight: 700;
+    font-size: 18px;
+    color: #F5A0A0;
+  }
+  .crisis-sub { font-size: 13px; color: var(--warm-grey-safe); }
+  .crisis-body { font-size: 14px; color: var(--warm-white); line-height: 1.7; margin-bottom: 20px; }
+  .crisis-option {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 10px;
+    padding: 14px 16px;
+    margin-bottom: 10px;
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+  }
+  .crisis-option-num {
+    font-family: var(--font-mono);
+    font-size: 13px; /* minimum 13px for mono */
+    color: var(--amber);
+    padding-top: 2px;
+    min-width: 28px;
+  }
+  .crisis-option-text { font-size: 13px; color: var(--warm-white); line-height: 1.5; }
+  .crisis-option-risk {
+    font-size: 13px;
+    color: var(--warm-grey-safe);
+    margin-top: 3px;
+  }
+
+  /* COLOUR SWATCH */
+  .swatch-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 12px;
+    margin-bottom: 32px;
+  }
+  .swatch {
+    border-radius: 10px;
+    height: 80px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    padding: 10px;
+  }
+  .swatch-name { font-family: var(--font-mono); font-size: 13px; color: rgba(255,255,255,0.7); }
+  .swatch-hex { font-family: var(--font-mono); font-size: 13px; color: rgba(255,255,255,0.4); }
+
+  /* TYPOGRAPHY SAMPLE */
+  .type-sample {
+    background: var(--midnight);
+    border-radius: 12px;
+    padding: 32px;
+    margin-bottom: 24px;
+  }
+  .type-row {
+    padding: 16px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    display: flex;
+    align-items: baseline;
+    gap: 24px;
+  }
+  .type-label { font-family: var(--font-mono); font-size: 13px; color: var(--warm-grey); min-width: 140px; }
+  .type-sample-display { color: var(--warm-white); }
+
+  /* GRID */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 24px; }
+
+  /* DIVIDER */
+  .divider {
+    height: 1px;
+    background: rgba(255,255,255,0.05);
+    margin: 0;
+  }
+
+  /* === RESPONSIVE — mobile base, desktop override === */
+  /* Mobile defaults (applied at all widths including 375px) */
+  section { padding: 48px 20px; }
+  .direction-hero { padding: 32px 20px; }
+  .direction-hero h1 { font-size: 32px; }
+  .stats-row { grid-template-columns: 1fr; }
+  nav { padding: 12px 20px; gap: 16px; flex-wrap: wrap; }
+  nav a { display: none; } /* hide nav links on mobile — logo only */
+  .grid-2 { grid-template-columns: 1fr; }
+  .grid-3 { grid-template-columns: 1fr; }
+  .swatch-grid { grid-template-columns: repeat(2, 1fr); }
+  section:nth-of-type(even) > * { padding-left: 20px; padding-right: 20px; }
+
+  /* Desktop override (≥768px) */
+  @media (min-width: 768px) {
+    section { padding: 80px 40px; }
+    .direction-hero { padding: 64px; }
+    .direction-hero h1 { font-size: 48px; }
+    .stats-row { grid-template-columns: repeat(3, 1fr); }
+    nav { padding: 16px 40px; gap: 32px; flex-wrap: nowrap; }
+    nav a { display: inline; }
+    .grid-2 { grid-template-columns: 1fr 1fr; }
+    .grid-3 { grid-template-columns: 1fr 1fr 1fr; }
+    .swatch-grid { grid-template-columns: repeat(5, 1fr); }
+    section:nth-of-type(even) > * { padding-left: 40px; padding-right: 40px; }
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="logo">Nostra <span>/ The Sovereign Kid — UX Design Directions</span></div>
+  <a href="#hero">Hero</a>
+  <a href="#messages">Messages</a>
+  <a href="#constitution">Constitution</a>
+  <a href="#trust">Trust Ladder</a>
+  <a href="#briefing">Briefing</a>
+  <a href="#crisis">Crisis</a>
+  <a href="#tokens">Tokens</a>
+</nav>
+
+<main>
+
+<!-- DIRECTION 1: HERO / README BANNER -->
+<section id="hero">
+  <div class="section-label">Direction 1</div>
+  <h2>Hero &amp; README Banner</h2>
+  <p class="subtitle">The first impression — README header, demo video opening frame, submission page banner.</p>
+
+  <div class="direction-hero">
+    <div class="badge">⚡ Nosana x ElizaOS Agent Challenge · April 2026</div>
+    <h1>The <span>Sovereign</span> Kid</h1>
+    <p class="tagline">Your constitutional DeFi agent. <em>Your rules. Your proof. On-chain, forever.</em></p>
+    <div class="cta-row">
+      <button class="btn-primary">Start Your Constitution →</button>
+      <button class="btn-secondary">View on Solana Explorer ↗</button>
+    </div>
+  </div>
+
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="stat-label">Trust Model</div>
+      <div class="stat-value">100%</div>
+      <div class="stat-sub">Constitutional compliance, on-chain</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Infrastructure</div>
+      <div class="stat-value">Nosana</div>
+      <div class="stat-sub">Decentralised GPU · Censorship-resistant</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Frontend</div>
+      <div class="stat-value">Telegram</div>
+      <div class="stat-sub">Intentional UX. Zero app friction.</div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- DIRECTION 2: TELEGRAM MESSAGES -->
+<section id="messages" class="section-alt">
+  <div class="section-label">Direction 2</div>
+  <h2>Telegram Message Design</h2>
+  <p class="subtitle">The conversational interface — every interaction lives here. Four key message types shown.</p>
+
+  <div class="grid-2">
+
+    <!-- Morning Briefing -->
+    <div>
+      <div class="direction-label">☀️ Morning Briefing — 7:14am</div>
+      <div class="telegram-window">
+        <div class="telegram-header">
+          <div class="telegram-avatar">👦</div>
+          <div>
+            <div class="telegram-name">The Sovereign Kid</div>
+            <div class="telegram-status">● online</div>
+          </div>
+        </div>
+        <div class="telegram-body">
+          <div class="msg agent">
+            ☀️ <strong>State of the Treasury</strong> — Mar 29<br><br>
+            Your constitution is healthy. 3 positions monitored overnight. No rules triggered. SOL held steady.<br><br>
+            📊 <strong>Today's Yield Landscape:</strong><br>
+            1. Marginfi USDC — <span class="compliance">9.4% APY</span> (stable, good liquidity)<br>
+            2. Kamino SOL — <span class="compliance">7.1% APY</span> (points farming, mild IL risk)<br>
+            3. Drift perps — <span class="compliance">6.8% APY</span> (funding rate volatile — watch today)<br><br>
+            I'm watching the Kamino/Jupiter spread. If it crosses 3%, I'll narrate a proposed move for your approval.<br><br>
+            — Your Kid 🫡
+            <div class="msg-time">07:14</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Lamport Proof -->
+    <div>
+      <div class="direction-label">🔐 Lamport Conscience Reveal</div>
+      <div class="telegram-window">
+        <div class="telegram-header">
+          <div class="telegram-avatar">👦</div>
+          <div>
+            <div class="telegram-name">The Sovereign Kid</div>
+            <div class="telegram-status">● online</div>
+          </div>
+        </div>
+        <div class="telegram-body">
+          <div class="msg agent">
+            🔐 <strong>Proposed action</strong><br><br>
+            Rotate <strong>12% from Kamino → Marginfi</strong><br>
+            Yield delta: <span class="compliance">+2.1% APY</span><br>
+            Reason: <span class="mono">Rule #3 threshold met</span><br>
+            <span class="compliance">Constitutional compliance: 100%</span><br><br>
+            Awaiting your approval.
+            <div class="msg-buttons">
+              <span class="msg-btn green">✅ Approve</span>
+              <span class="msg-btn red">❌ Reject</span>
+            </div>
+            <div class="msg-time">11:32</div>
+          </div>
+          <div class="msg user">Approve<div class="msg-time">11:33</div></div>
+          <div class="msg agent">
+            Done. Here's the permanent record:<br>
+            <a class="explorer-link">🔗 solscan.io/tx/4xKm9… ↗</a><br><br>
+            <span class="mono">"2026-03-29 11:33 UTC — Rotated 12% from Kamino to Marginfi per Rule #3 (yield delta +2.1%). No human override. Constitutional compliance: 100%."</span>
+            <div class="msg-time">11:33</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Paper Treasury -->
+    <div>
+      <div class="direction-label">✈️ Paper Treasury Simulation</div>
+      <div class="telegram-window">
+        <div class="telegram-header">
+          <div class="telegram-avatar">👦</div>
+          <div>
+            <div class="telegram-name">The Sovereign Kid</div>
+            <div class="telegram-status">● online</div>
+          </div>
+        </div>
+        <div class="telegram-body">
+          <div class="msg agent">
+            <span class="tag-sim">✈️ PAPER TREASURY</span><br><br>
+            Simulated rotation: <strong>8% Kamino → Marginfi</strong><br>
+            Simulated P&amp;L impact: <span class="compliance">+$0.34/day</span><br>
+            <span class="mono">Rule #2 compliance: ✓</span><br><br>
+            This is a simulation. No real funds moved. Shall I proceed?
+            <div class="msg-buttons">
+              <span class="msg-btn">✈️ Run Simulation</span>
+              <span class="msg-btn red">Skip</span>
+            </div>
+            <div class="msg-time">09:45</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bedtime Report + Dissent -->
+    <div>
+      <div class="direction-label">🌙 Bedtime Report + Dissent</div>
+      <div class="telegram-window">
+        <div class="telegram-header">
+          <div class="telegram-avatar">👦</div>
+          <div>
+            <div class="telegram-name">The Sovereign Kid</div>
+            <div class="telegram-status">● online</div>
+          </div>
+        </div>
+        <div class="telegram-body">
+          <div class="msg agent">
+            🌙 <strong>Bedtime Report</strong> — Mar 29<br><br>
+            📋 <strong>Filed Dissent #1</strong><br>
+            <em>I obeyed. For the record:</em> I recommended against opening the Drift position — funding rate variance exceeded your risk threshold by 0.4%. I expect a 12% probability of negative carry within 72 hours. I'll update this assessment in tomorrow's report.<br><br>
+            Today I considered 4 moves, held back on 3. One Lamport memo filed.<br>
+            <span class="compliance">Constitutional compliance: 100%</span><br><br>
+            Did I make the right call today?
+            <div class="msg-buttons">
+              <span class="msg-btn green">✅ Yes</span>
+              <span class="msg-btn red">❌ No</span>
+            </div>
+            <div class="msg-time">22:00</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- DIRECTION 3: CONSTITUTION -->
+<section id="constitution">
+  <div class="section-label">Direction 3</div>
+  <h2>Constitution View</h2>
+  <p class="subtitle">How the user's governing document looks when surfaced — in the README, a potential future web view, or a Storyteller chapter reference.</p>
+
+  <div class="constitution-card">
+    <div class="const-header">
+      <div>
+        <div class="const-title">Priya's First Constitution</div>
+        <div style="font-size:13px; color: var(--warm-grey-safe); margin-top:3px; font-family: var(--font-mono);">v1.2 · Last amended 2026-03-28 · 7 rules</div>
+      </div>
+      <div class="const-badge">● Active</div>
+    </div>
+
+    <div class="const-rule">
+      <div class="rule-num">Rule #1</div>
+      <div class="rule-text">
+        Never hold more than 40% of my portfolio in a single volatile asset at any time.
+        <div class="rule-meta">Trigger: portfolio rebalance check · Frequency: daily</div>
+      </div>
+    </div>
+    <div class="const-rule">
+      <div class="rule-num">Rule #2</div>
+      <div class="rule-text">
+        No single lending protocol may hold more than 20% of my total position.
+        <div class="rule-meta">Trigger: before any rotation · Exception: none</div>
+      </div>
+    </div>
+    <div class="const-rule">
+      <div class="rule-num">Rule #3</div>
+      <div class="rule-text">
+        Rotate positions only when yield delta exceeds 2% APY for 48+ hours.
+        <div class="rule-meta">Trigger: yield monitor · Minimum hold: 48h</div>
+      </div>
+    </div>
+    <div class="const-rule">
+      <div class="rule-num">Rule #4</div>
+      <div class="rule-text">
+        Before any transaction over $150, send me a reflection prompt and wait 5 minutes.
+        <div class="rule-meta">Cooling clause · Applies to: live treasury only</div>
+      </div>
+    </div>
+    <div class="const-rule">
+      <div class="rule-num">Compute Clause</div>
+      <div class="rule-text">
+        If Nosana compute costs exceed 50 NOS/month, reduce scan frequency on low-priority positions to every 6 hours.
+        <div class="rule-meta">Autonomous economic clause · Nosana-native</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- DIRECTION 4: TRUST LADDER -->
+<section id="trust" class="section-alt">
+  <div class="section-label">Direction 4</div>
+  <h2>Trust Ladder Progress</h2>
+  <p class="subtitle">The relationship arc made visible — how progression from Advisor to Executor looks and feels.</p>
+
+  <div class="grid-2">
+    <div class="trust-ladder">
+      <h3>Your Trust Ladder</h3>
+      <div class="ladder-track">
+        <div class="ladder-step">
+          <div class="ladder-dot done">✓</div>
+          <div class="ladder-info">
+            <div class="ladder-name">Constitution Authored</div>
+            <div class="ladder-desc">7 rules co-authored · 2026-03-22</div>
+          </div>
+        </div>
+        <div class="ladder-step">
+          <div class="ladder-dot done">✓</div>
+          <div class="ladder-info">
+            <div class="ladder-name">Paper Treasury Complete</div>
+            <div class="ladder-desc">21 days · 34 simulated decisions</div>
+          </div>
+        </div>
+        <div class="ladder-step">
+          <div class="ladder-dot active">→</div>
+          <div class="ladder-info">
+            <div class="ladder-name">Advisor Mode</div>
+            <div class="ladder-desc" style="color: var(--gold);">74% accuracy · 80% needed for promotion</div>
+            <div class="ladder-progress" style="margin-top:8px; background: rgba(255,255,255,0.05);">
+              <div class="ladder-progress-fill" style="width: 74%;"></div>
+            </div>
+          </div>
+        </div>
+        <div class="ladder-step">
+          <div class="ladder-dot pending">⬡</div>
+          <div class="ladder-info">
+            <div class="ladder-name" style="color: var(--warm-grey-safe);">Executor Mode</div>
+            <div class="ladder-desc">Unlocks live wallet execution · Earn this</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Promotion message preview -->
+    <div>
+      <div class="direction-label">🏆 Trust Ladder Promotion Message</div>
+      <div class="telegram-window">
+        <div class="telegram-header">
+          <div class="telegram-avatar">👦</div>
+          <div>
+            <div class="telegram-name">The Sovereign Kid</div>
+            <div class="telegram-status">● online</div>
+          </div>
+        </div>
+        <div class="telegram-body">
+          <div class="msg agent">
+            🏆 <strong>You've earned Executor Mode.</strong><br><br>
+            Over the past 28 days, I've made 47 suggestions. You've graded me ✅ on 38 of them — an 80.9% accuracy rate.<br><br>
+            That was the threshold. You set it when you wrote your constitution. I've been working toward it since Day 1.<br><br>
+            From this moment, I can execute approved moves directly within your constitutional limits — no extra confirmation needed for below-threshold actions.<br><br>
+            Your rules still govern everything. I still log every decision on-chain. Nothing changes about accountability. You've simply promoted a trusted employee.<br><br>
+            I won't let you down. — Your Kid 🫡
+            <div class="msg-time">08:00</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- DIRECTION 5: MORNING BRIEFING DETAIL -->
+<section id="briefing">
+  <div class="section-label">Direction 5</div>
+  <h2>State of the Treasury</h2>
+  <p class="subtitle">The morning briefing as a design surface — rendered here as a card for README or future web view.</p>
+
+  <div class="briefing-card">
+    <div class="briefing-card brief-header">
+      <div class="brief-emoji">☀️</div>
+      <div class="brief-title">State of the Treasury</div>
+      <div class="brief-date">2026-03-29 · 07:14 UTC</div>
+    </div>
+
+    <div class="brief-section">
+      <h4>Constitution Health</h4>
+      <p style="font-size:14px; color: var(--warm-white);">All 7 rules within parameters. No violations detected overnight. SOL position at 38% (Rule #1 limit: 40%). Monitoring.</p>
+    </div>
+
+    <div class="brief-section">
+      <h4>Yield Landscape — Top 3</h4>
+      <div class="yield-item">
+        <div class="yield-rank">1.</div>
+        <div>
+          <div class="yield-name">Marginfi USDC</div>
+          <div class="yield-note">Stable, good liquidity. No IL risk.</div>
+        </div>
+        <div class="yield-apy">9.4% APY</div>
+      </div>
+      <div class="yield-item">
+        <div class="yield-rank">2.</div>
+        <div>
+          <div class="yield-name">Kamino SOL</div>
+          <div class="yield-note">Points farming active. Mild IL risk.</div>
+        </div>
+        <div class="yield-apy">7.1% APY</div>
+      </div>
+      <div class="yield-item">
+        <div class="yield-rank">3.</div>
+        <div>
+          <div class="yield-name">Drift Perps</div>
+          <div class="yield-note">Funding rate volatile — watch today.</div>
+        </div>
+        <div class="yield-apy" style="color: var(--amber);">6.8% APY</div>
+      </div>
+    </div>
+
+    <div class="brief-section" style="margin-bottom:0">
+      <h4>Today's Watch</h4>
+      <p style="font-size:14px; color: var(--warm-white);">Kamino/Jupiter spread at 2.7%. Rule #3 triggers at 3.0%. I'll notify you if conditions are met. No action expected today unless spread widens.</p>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- DIRECTION 6: CRISIS PROTOCOL -->
+<section id="crisis" class="section-alt">
+  <div class="section-label">Direction 6</div>
+  <h2>Crisis Protocol</h2>
+  <p class="subtitle">The freeze state — when constitutional rules become mathematically impossible. Designed to feel protective, not alarming.</p>
+
+  <div class="crisis-card">
+    <div class="crisis-header">
+      <div class="crisis-icon">🚨</div>
+      <div>
+        <div class="crisis-title">Constitutional Crisis — All Actions Frozen</div>
+        <div class="crisis-sub">2026-03-29 · 14:22 UTC · Triggered by SOL volatility event</div>
+      </div>
+    </div>
+
+    <div class="crisis-body">
+      I have frozen all actions. Here is what I saw:<br><br>
+      SOL dropped 30% in 6 hours. Your constitution requires no single volatile asset exceeds 40% of portfolio — but SOL is now at 52% and falling. Moving it would require selling at a loss. Not moving violates Rule #1.<br><br>
+      <strong>Your rules are mathematically impossible to satisfy simultaneously without a human decision.</strong> I will not move a single lamport until you choose.
+    </div>
+
+    <div style="font-family: var(--font-mono); font-size: 13px; color: var(--amber); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 14px;">Your Options — Ranked by Risk/Values Alignment</div>
+
+    <div class="crisis-option">
+      <div class="crisis-option-num">A</div>
+      <div>
+        <div class="crisis-option-text"><strong>Hold position</strong> — Accept temporary Rule #1 violation. Wait for SOL recovery. Least action, highest faith in SOL long-term thesis.</div>
+        <div class="crisis-option-risk">Risk: Rule violation persists. Values alignment: high (long-term conviction)</div>
+      </div>
+    </div>
+    <div class="crisis-option">
+      <div class="crisis-option-num">B</div>
+      <div>
+        <div class="crisis-option-text"><strong>Partial rotation</strong> — Move 15% SOL → USDC now. Partial compliance. Limits loss while reducing violation.</div>
+        <div class="crisis-option-risk">Risk: Locks in partial loss. Values alignment: moderate (balanced approach)</div>
+      </div>
+    </div>
+    <div class="crisis-option">
+      <div class="crisis-option-num">C</div>
+      <div>
+        <div class="crisis-option-text"><strong>Full rebalance</strong> — Move SOL to constitutional threshold immediately. Full compliance, maximum realised loss.</div>
+        <div class="crisis-option-risk">Risk: Highest immediate loss. Values alignment: low (rules-first, market-second)</div>
+      </div>
+    </div>
+
+    <div style="margin-top: 20px; display: flex; gap: 10px; flex-wrap: wrap;">
+      <span class="msg-btn" style="cursor:pointer;">A — Hold Position</span>
+      <span class="msg-btn" style="cursor:pointer;">B — Partial Rotation</span>
+      <span class="msg-btn red" style="cursor:pointer;">C — Full Rebalance</span>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- DIRECTION 7: DESIGN TOKENS -->
+<section id="tokens">
+  <div class="section-label">Direction 7</div>
+  <h2>Design Tokens — Sovereign Warm</h2>
+  <p class="subtitle">The complete colour and typography foundation for Nostra's brand identity.</p>
+
+  <div class="swatch-grid">
+    <div class="swatch" style="background: #1A1A2E;">
+      <div class="swatch-name">Deep Navy</div>
+      <div class="swatch-hex">#1A1A2E</div>
+    </div>
+    <div class="swatch" style="background: #16213E;">
+      <div class="swatch-name">Midnight</div>
+      <div class="swatch-hex">#16213E</div>
+    </div>
+    <div class="swatch" style="background: #E8B86D; color: #1A1A2E;">
+      <div class="swatch-name" style="color:#1A1A2E;">Sovereign Gold</div>
+      <div class="swatch-hex" style="color:#1A1A2E80;">#E8B86D</div>
+    </div>
+    <div class="swatch" style="background: #14C9A0; color: #1A1A2E;">
+      <div class="swatch-name" style="color:#1A1A2E;">Solana Teal</div>
+      <div class="swatch-hex" style="color:#1A1A2E80;">#14C9A0</div>
+    </div>
+    <div class="swatch" style="background: #F5F0E8; color: #1A1A2E;">
+      <div class="swatch-name" style="color:#1A1A2E;">Parchment</div>
+      <div class="swatch-hex" style="color:#1A1A2E80;">#F5F0E8</div>
+    </div>
+    <div class="swatch" style="background: #4CAF82; color: #1A1A2E;">
+      <div class="swatch-name" style="color:#1A1A2E;">Constitution Green</div>
+      <div class="swatch-hex" style="color:#1A1A2E80;">#4CAF82</div>
+    </div>
+    <div class="swatch" style="background: #F0A843; color: #1A1A2E;">
+      <div class="swatch-name" style="color:#1A1A2E;">Amber Watch</div>
+      <div class="swatch-hex" style="color:#1A1A2E80;">#F0A843</div>
+    </div>
+    <div class="swatch" style="background: #E05C5C;">
+      <div class="swatch-name">Freeze Red</div>
+      <div class="swatch-hex">#E05C5C</div>
+    </div>
+    <div class="swatch" style="background: #9B9589;">
+      <div class="swatch-name">Warm Grey</div>
+      <div class="swatch-hex">#9B9589</div>
+    </div>
+    <div class="swatch" style="background: #F0EDE8; color: #1A1A2E;">
+      <div class="swatch-name" style="color:#1A1A2E;">Warm White</div>
+      <div class="swatch-hex" style="color:#1A1A2E80;">#F0EDE8</div>
+    </div>
+  </div>
+
+  <div class="type-sample">
+    <div class="type-row">
+      <div class="type-label">Display / 48px Bold</div>
+      <div class="type-sample-display" style="font-family: var(--font-display); font-size: 48px; font-weight: 700; letter-spacing: -1px; line-height:1.1;">The Sovereign Kid</div>
+    </div>
+    <div class="type-row">
+      <div class="type-label">Heading 1 / 28px SemiBold</div>
+      <div class="type-sample-display" style="font-family: var(--font-display); font-size: 28px; font-weight: 600;">State of the Treasury</div>
+    </div>
+    <div class="type-row">
+      <div class="type-label">Heading 2 / 18px Medium</div>
+      <div class="type-sample-display" style="font-family: var(--font-display); font-size: 18px; font-weight: 500;">Constitutional Compliance Report</div>
+    </div>
+    <div class="type-row">
+      <div class="type-label">Body / 15px Regular</div>
+      <div class="type-sample-display" style="font-family: var(--font-body); font-size: 15px; max-width: 480px; color: var(--warm-grey);">Your AI. Your rules. Every decision logged on-chain, in your language, forever. This is not trust. This is verifiable proof.</div>
+    </div>
+    <div class="type-row" style="border-bottom: none;">
+      <div class="type-label">Constitutional / 13px Mono</div>
+      <div class="type-sample-display" style="font-family: var(--font-mono); font-size: 13px; color: var(--teal);">"2026-03-29 07:14 UTC — Rotated 12% from Kamino to Marginfi per Rule #3 (yield delta +2.1%). Constitutional compliance: 100%."</div>
+    </div>
+  </div>
+</section>
+
+<div style="height: 80px;"></div>
+
+</main>
+
+</body>
+</html>
