@@ -1,4 +1,4 @@
-import type { AgentState } from '../types/agent-state.js';
+import type { AgentState, PendingProposal } from '../types/agent-state.js';
 import type { DatabaseLike } from '../db/migrations.js';
 
 // Extend DatabaseLike with query support for reads
@@ -18,6 +18,8 @@ const DEFAULT_STATE: Omit<AgentState, 'updatedAt'> = {
   suggestionsSampled: 0,
   onboardingState: 'pending',
   referralSource: undefined,
+  promotionPending: false,
+  telegramChatId: undefined,
 };
 
 class AgentStateServiceImpl {
@@ -34,13 +36,17 @@ class AgentStateServiceImpl {
     } else {
       this.state = this.fromRow(row);
     }
+    this.state.pendingProposal = undefined;
   }
 
   getState(): AgentState {
     if (!this.state) {
       throw new Error('AgentStateService not initialised — call init() first');
     }
-    return { ...this.state };
+    return {
+      ...this.state,
+      pendingProposal: this.state.pendingProposal ? { ...this.state.pendingProposal } : undefined,
+    };
   }
 
   async setState(update: Partial<AgentState>, db: ReadableDatabaseLike): Promise<void> {
@@ -51,13 +57,24 @@ class AgentStateServiceImpl {
     this.persist(db);
   }
 
+  setPendingProposal(proposal: PendingProposal | undefined): void {
+    if (!this.state) {
+      throw new Error('AgentStateService not initialised — call init() first');
+    }
+    this.state = {
+      ...this.state,
+      pendingProposal: proposal ? { ...proposal } : undefined,
+    };
+  }
+
   private persist(db: ReadableDatabaseLike): void {
     const s = this.state!;
     db.prepare(`
       INSERT INTO agent_state
         (id, mode, trust_ladder, crisis_status, constitution_version, accuracy_score,
-         suggestions_sampled, onboarding_state, referral_source, updated_at)
-      VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+         suggestions_sampled, onboarding_state, referral_source, telegram_chat_id,
+         promotion_pending, updated_at)
+      VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       ON CONFLICT(id) DO UPDATE SET
         mode = excluded.mode,
         trust_ladder = excluded.trust_ladder,
@@ -67,6 +84,8 @@ class AgentStateServiceImpl {
         suggestions_sampled = excluded.suggestions_sampled,
         onboarding_state = excluded.onboarding_state,
         referral_source = excluded.referral_source,
+        telegram_chat_id = excluded.telegram_chat_id,
+        promotion_pending = excluded.promotion_pending,
         updated_at = excluded.updated_at
     `).run(
       s.mode,
@@ -77,6 +96,8 @@ class AgentStateServiceImpl {
       s.suggestionsSampled,
       s.onboardingState,
       s.referralSource ?? null,
+      s.telegramChatId ?? null,
+      s.promotionPending ? 1 : 0,
       s.updatedAt,
     );
   }
@@ -91,6 +112,8 @@ class AgentStateServiceImpl {
       suggestionsSampled: row['suggestions_sampled'] as number,
       onboardingState: (row['onboarding_state'] ?? 'pending') as AgentState['onboardingState'],
       referralSource: (row['referral_source'] as string | undefined) ?? undefined,
+      promotionPending: Boolean(row['promotion_pending']),
+      telegramChatId: (row['telegram_chat_id'] as string | undefined) ?? undefined,
       updatedAt: row['updated_at'] as string,
     };
   }

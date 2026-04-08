@@ -38,4 +38,36 @@ export function run(db: DatabaseLike): void {
   } catch {
     // Column already exists — idempotent
   }
+  // Story 3.1: paper_positions seeds on first run — no ALTER needed (new table via ALL_SCHEMAS)
+  // No seed INSERT needed — PortfolioProvider handles empty table gracefully
+  // Story 3.2: telegram_chat_id for polling loop proactive messaging
+  try {
+    db.prepare("ALTER TABLE agent_state ADD COLUMN telegram_chat_id TEXT").run();
+  } catch {
+    // Column already exists — idempotent
+  }
+  // Story 3.3: status column for failed memo tracking
+  try {
+    db.prepare("ALTER TABLE on_chain_memos ADD COLUMN status TEXT NOT NULL DEFAULT 'confirmed'").run();
+  } catch {
+    // Column already exists — idempotent
+  }
+  // Story 3.4: status column for pending suggestion tracking
+  try {
+    db.prepare("ALTER TABLE trust_ladder_log ADD COLUMN status TEXT NOT NULL DEFAULT 'pending'").run();
+  } catch {
+    // Column already exists — idempotent
+  }
+  // Story 3.4: unique constraint on suggestion_id for INSERT OR IGNORE deduplication
+  try {
+    db.prepare("CREATE UNIQUE INDEX IF NOT EXISTS idx_trust_ladder_suggestion_id ON trust_ladder_log(suggestion_id)").run();
+  } catch {
+    // Index already exists — idempotent
+  }
+  // Story 3.6: promotion_pending for Trust Ladder 80% threshold flag
+  try {
+    db.prepare("ALTER TABLE agent_state ADD COLUMN promotion_pending INTEGER NOT NULL DEFAULT 0").run();
+  } catch {
+    // Column already exists — idempotent
+  }
 }

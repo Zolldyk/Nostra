@@ -1,6 +1,8 @@
-import { afterEach, beforeEach, describe, expect, it, mock } from 'bun:test';
+import { afterEach, beforeEach, describe, expect, it, mock, spyOn } from 'bun:test';
 import { Database } from 'bun:sqlite';
 import type { Memory } from '@elizaos/core';
+import * as migrations from '../db/migrations.js';
+import { AgentStateService } from '../services/agent-state-service.js';
 import type { AgentState } from '../types/agent-state.js';
 
 type CallbackPayload = {
@@ -13,10 +15,11 @@ describe('SocraticOnboardingAction', () => {
   let testDb: Database;
   let state: AgentState;
   let setStateCalls: Array<Partial<AgentState>>;
+  let getStateSpy: ReturnType<typeof spyOn>;
+  let setStateSpy: ReturnType<typeof spyOn>;
+  let getDbSpy: ReturnType<typeof spyOn>;
 
-  beforeEach(async () => {
-    const actualMigrations = await import('../db/migrations.js');
-
+  beforeEach(() => {
     testDb = new Database(':memory:');
     testDb.run('PRAGMA foreign_keys = ON');
     testDb.run(`CREATE TABLE IF NOT EXISTS agent_state (
@@ -50,25 +53,18 @@ describe('SocraticOnboardingAction', () => {
     };
     setStateCalls = [];
 
-    mock.module('../services/agent-state-service.js', () => ({
-      AgentStateService: {
-        getState: () => ({ ...state }),
-        setState: async (update: Partial<AgentState>) => {
-          setStateCalls.push(update);
-          state = { ...state, ...update, updatedAt: new Date().toISOString() };
-        },
-      },
-    }));
-
-    mock.module('../db/migrations.js', () => ({
-      ...actualMigrations,
-      getDb: () => testDb,
-      DatabaseLike: {},
-    }));
+    getStateSpy = spyOn(AgentStateService, 'getState').mockImplementation(() => ({ ...state }));
+    setStateSpy = spyOn(AgentStateService, 'setState').mockImplementation(async (update: Partial<AgentState>) => {
+      setStateCalls.push(update);
+      state = { ...state, ...update, updatedAt: new Date().toISOString() };
+    });
+    getDbSpy = spyOn(migrations, 'getDb').mockReturnValue(testDb as ReturnType<typeof migrations.getDb>);
   });
 
   afterEach(() => {
-    mock.restore();
+    getStateSpy.mockRestore();
+    setStateSpy.mockRestore();
+    getDbSpy.mockRestore();
     testDb.close();
   });
 

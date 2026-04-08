@@ -30,12 +30,16 @@ export const HandleStartCommand: Action = {
     const db = migrations.getDb();
     const text = (message.content?.text ?? '').trim();
     const state = AgentStateService.getState();
+    const telegramChatId = message.roomId ? String(message.roomId) : undefined;
 
     // Parse referral parameter: "/start ref_12345678"
     const refMatch = text.match(/^\/start\s+ref_(\S+)/i);
     const referrerId = refMatch?.[1] ?? null;
 
     if (state.constitutionVersion > 0) {
+      if (!state.telegramChatId && telegramChatId) {
+        await AgentStateService.setState({ telegramChatId }, db);
+      }
       // AC3: existing constitution — greet and summarise, do NOT restart onboarding, ignore referral param
       if (callback) {
         await callback({
@@ -58,6 +62,11 @@ export const HandleStartCommand: Action = {
         });
       }
       await AgentStateService.setState({ onboardingState: 'disclaimer_delivered' }, db);
+      // Persist chat ID for polling loop proactive messages — idempotent (skip if already set)
+      const currentState = AgentStateService.getState();
+      if (!currentState.telegramChatId && telegramChatId) {
+        await AgentStateService.setState({ telegramChatId }, db);
+      }
     }
   },
   examples: [

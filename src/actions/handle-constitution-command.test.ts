@@ -1,5 +1,7 @@
-import { afterEach, beforeEach, describe, expect, it, mock } from 'bun:test';
+import { afterEach, beforeEach, describe, expect, it, mock, spyOn } from 'bun:test';
 import type { Memory } from '@elizaos/core';
+import * as migrations from '../db/migrations.js';
+import { AgentStateService } from '../services/agent-state-service.js';
 import type { AgentState } from '../types/agent-state.js';
 
 type CallbackPayload = {
@@ -12,10 +14,10 @@ describe('HandleConstitutionCommand', () => {
   let state: AgentState;
   let activeConstitution: Record<string, unknown> | undefined;
   let rules: Array<Record<string, unknown>>;
+  let getStateSpy: ReturnType<typeof spyOn>;
+  let getDbSpy: ReturnType<typeof spyOn>;
 
-  beforeEach(async () => {
-    const actualMigrations = await import('../db/migrations.js');
-
+  beforeEach(() => {
     state = {
       mode: 'paper',
       trustLadder: 'advisor',
@@ -29,39 +31,32 @@ describe('HandleConstitutionCommand', () => {
     activeConstitution = undefined;
     rules = [];
 
-    mock.module('../services/agent-state-service.js', () => ({
-      AgentStateService: {
-        getState: () => ({ ...state }),
+    getStateSpy = spyOn(AgentStateService, 'getState').mockImplementation(() => ({ ...state }));
+    getDbSpy = spyOn(migrations, 'getDb').mockReturnValue({
+      prepare(sql: string) {
+        if (sql.includes('FROM constitution_rules')) {
+          return {
+            get: () => undefined,
+            all: (constitutionId?: number) =>
+              constitutionId === activeConstitution?.id ? rules : [],
+          };
+        }
+
+        if (sql.includes('FROM constitution')) {
+          return {
+            get: () => activeConstitution,
+            all: () => [],
+          };
+        }
+
+        throw new Error(`Unexpected SQL in test: ${sql}`);
       },
-    }));
-
-    mock.module('../db/migrations.js', () => ({
-      ...actualMigrations,
-      getDb: () => ({
-        prepare(sql: string) {
-          if (sql.includes('FROM constitution_rules')) {
-            return {
-              get: () => undefined,
-              all: (constitutionId?: number) =>
-                constitutionId === activeConstitution?.id ? rules : [],
-            };
-          }
-
-          if (sql.includes('FROM constitution')) {
-            return {
-              get: () => activeConstitution,
-              all: () => [],
-            };
-          }
-
-          throw new Error(`Unexpected SQL in test: ${sql}`);
-        },
-      }),
-    }));
+    } as ReturnType<typeof migrations.getDb>);
   });
 
   afterEach(() => {
-    mock.restore();
+    getStateSpy.mockRestore();
+    getDbSpy.mockRestore();
   });
 
   it('validates /constitution', async () => {

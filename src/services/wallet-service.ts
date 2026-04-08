@@ -8,6 +8,7 @@ import {
 } from '@solana/web3.js';
 import bs58 from 'bs58';
 import { withRetry } from '../utils/with-retry.js';
+import { AgentStateService } from '../services/agent-state-service.js';
 
 const MEMO_PROGRAM_ID = new PublicKey('MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr');
 const MEMO_MAX_CHARS = 500;
@@ -22,15 +23,24 @@ class WalletServiceImpl {
   private connection: Connection | null = null;
   private network: SolanaNetwork = 'devnet';
 
+  private getRpcUrlForNetwork(network: SolanaNetwork): string {
+    const legacyRpcUrl = process.env.ALCHEMY_RPC_URL;
+    const rpcUrl = network === 'devnet'
+      ? process.env.ALCHEMY_RPC_URL_DEVNET ?? legacyRpcUrl
+      : process.env.ALCHEMY_RPC_URL_MAINNET ?? legacyRpcUrl;
+
+    if (!rpcUrl) {
+      const envName = network === 'devnet' ? 'ALCHEMY_RPC_URL_DEVNET' : 'ALCHEMY_RPC_URL_MAINNET';
+      throw new Error(`${envName} env var is required but not set`);
+    }
+
+    return rpcUrl;
+  }
+
   init(): void {
     const rawKey = process.env.SOLANA_PRIVATE_KEY;
     if (!rawKey) {
       throw new Error('SOLANA_PRIVATE_KEY env var is required but not set');
-    }
-
-    const rpcUrl = process.env.ALCHEMY_RPC_URL;
-    if (!rpcUrl) {
-      throw new Error('ALCHEMY_RPC_URL env var is required but not set');
     }
 
     // Decode base58 private key — never log the key
@@ -44,6 +54,11 @@ class WalletServiceImpl {
       throw new Error(`Invalid SOLANA_NETWORK: "${networkEnv}" — must be "devnet" or "mainnet-beta"`);
     }
     this.network = networkEnv;
+    if (AgentStateService.getState().mode === 'paper' && this.network === 'mainnet-beta') {
+      console.warn('[WalletService] Paper mode active — overriding network to devnet (FR44)');
+      this.network = 'devnet';
+    }
+    const rpcUrl = this.getRpcUrlForNetwork(this.network);
     this.connection = new Connection(rpcUrl, 'confirmed');
 
     console.log(`WalletService initialised — network: ${this.network}, pubkey: ${this.keypair.publicKey.toBase58()}`);

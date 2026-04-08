@@ -14,13 +14,17 @@ import { HandlePauseCommand } from './actions/handle-pause-command.js';
 import { SocraticOnboardingAction } from './actions/socratic-onboarding.js';
 import { ParseConstitutionAction } from './actions/parse-constitution.js';
 import { GenerateReferralLinkAction } from './actions/generate-referral-link.js';
+import { HandleProposalResponse } from './actions/handle-proposal-response.js';
 import { ConstitutionProvider } from './providers/constitution-provider.js';
-import { PortfolioProvider } from './providers/portfolio-provider.js';
+import { PortfolioProvider, warmPortfolioCache } from './providers/portfolio-provider.js';
 import { YieldRatesProvider } from './providers/yield-rates-provider.js';
+import { JupiterBrainProvider } from './providers/jupiter-brain-provider.js';
 import { TrustScoreProvider } from './providers/trust-score-provider.js';
 import { GradeSuggestionEvaluator } from './evaluators/grade-suggestion-evaluator.js';
 import { TrustLadderEvaluator } from './evaluators/trust-ladder-evaluator.js';
 import { CrisisTriggerEvaluator } from './evaluators/crisis-trigger-evaluator.js';
+import { startPollingLoop } from './scheduler/polling-loop.js';
+import { startBriefingScheduler } from './scheduler/briefing-scheduler.js';
 
 const nostraPlugin: Plugin = {
   name: 'nostra',
@@ -31,9 +35,14 @@ const nostraPlugin: Plugin = {
     const db = migrations.getDb();
     migrations.run(db);
     await AgentStateService.init(db);
+    warmPortfolioCache();
     WalletService.init();
+    // IAgentRuntime is available as _runtime — do NOT await (returns interval handle, not a Promise)
+    startPollingLoop(_runtime);
+    // Cron-based scheduled briefings — node-cron fires at wall-clock time (NFR5)
+    startBriefingScheduler(_runtime);
   },
-  providers: [ConstitutionProvider, PortfolioProvider, YieldRatesProvider, TrustScoreProvider],
+  providers: [ConstitutionProvider, PortfolioProvider, YieldRatesProvider, JupiterBrainProvider, TrustScoreProvider],
   actions: [
     HandleStartCommand,
     HandleConstitutionCommand,
@@ -44,6 +53,7 @@ const nostraPlugin: Plugin = {
     ParseConstitutionAction,
     GenerateReferralLinkAction,
     LogDecisionOnChain,
+    HandleProposalResponse,
   ],
   evaluators: [GradeSuggestionEvaluator, TrustLadderEvaluator, CrisisTriggerEvaluator],
 };

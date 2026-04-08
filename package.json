@@ -27,11 +27,13 @@
     "@elizaos/plugin-telegram": "^1.0.0",
     "@solana/web3.js": "^1.98.0",
     "better-sqlite3": "^12.8.0",
-    "bs58": "^6.0.0"
+    "bs58": "^6.0.0",
+    "node-cron": "^3.0.0"
   },
   "devDependencies": {
     "@elizaos/cli": "^1.0.0",
     "@types/better-sqlite3": "^7.6.0",
+    "@types/node-cron": "^3.0.11",
     "bun-types": "^1.3.11",
     "typescript": "^5.0.0"
   }

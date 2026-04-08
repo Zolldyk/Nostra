@@ -1,5 +1,6 @@
-import { afterEach, beforeEach, describe, expect, it, mock } from 'bun:test';
+import { afterEach, beforeEach, describe, expect, it, mock, spyOn } from 'bun:test';
 import type { Memory } from '@elizaos/core';
+import { AgentStateService } from '../services/agent-state-service.js';
 import type { AgentState } from '../types/agent-state.js';
 
 type CallbackPayload = {
@@ -10,6 +11,7 @@ type CallbackPayload = {
 
 describe('GenerateReferralLinkAction', () => {
   let state: AgentState;
+  let getStateSpy: ReturnType<typeof spyOn>;
 
   beforeEach(() => {
     state = {
@@ -23,15 +25,11 @@ describe('GenerateReferralLinkAction', () => {
       updatedAt: new Date().toISOString(),
     };
 
-    mock.module('../services/agent-state-service.js', () => ({
-      AgentStateService: {
-        getState: () => ({ ...state }),
-      },
-    }));
+    getStateSpy = spyOn(AgentStateService, 'getState').mockImplementation(() => ({ ...state }));
   });
 
   afterEach(() => {
-    mock.restore();
+    getStateSpy.mockRestore();
   });
 
   it('validate returns false if no active constitution', async () => {

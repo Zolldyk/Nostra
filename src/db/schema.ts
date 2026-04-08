@@ -9,6 +9,7 @@ CREATE TABLE IF NOT EXISTS agent_state (
   suggestions_sampled INTEGER NOT NULL DEFAULT 0,
   onboarding_state TEXT NOT NULL DEFAULT 'pending',
   referral_source TEXT,
+  promotion_pending INTEGER NOT NULL DEFAULT 0,
   updated_at TEXT NOT NULL
 )`;
 
@@ -36,15 +37,17 @@ CREATE TABLE IF NOT EXISTS on_chain_memos (
   action_type TEXT NOT NULL,
   memo_text TEXT NOT NULL,
   explorer_url TEXT NOT NULL,
-  created_at TEXT NOT NULL
+  created_at TEXT NOT NULL,
+  status TEXT NOT NULL DEFAULT 'confirmed'
 )`;
 
 export const CREATE_TRUST_LADDER_LOG = `
 CREATE TABLE IF NOT EXISTS trust_ladder_log (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
-  suggestion_id TEXT NOT NULL,
-  user_grade INTEGER NOT NULL,
-  created_at TEXT NOT NULL
+  suggestion_id TEXT NOT NULL UNIQUE,
+  user_grade INTEGER NOT NULL DEFAULT 0,
+  created_at TEXT NOT NULL,
+  status TEXT NOT NULL DEFAULT 'pending'
 )`;
 
 export const CREATE_ONBOARDING_SESSION = `
@@ -56,6 +59,16 @@ CREATE TABLE IF NOT EXISTS onboarding_session (
   created_at TEXT NOT NULL
 )`;
 
+export const CREATE_PAPER_POSITIONS = `
+CREATE TABLE IF NOT EXISTS paper_positions (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  protocol TEXT NOT NULL,
+  symbol TEXT NOT NULL,
+  amount_usd REAL NOT NULL DEFAULT 0,
+  percentage REAL NOT NULL DEFAULT 0,
+  last_updated TEXT NOT NULL
+)`;
+
 export const ALL_SCHEMAS = [
   CREATE_AGENT_STATE,
   CREATE_CONSTITUTION,
@@ -63,4 +76,5 @@ export const ALL_SCHEMAS = [
   CREATE_ON_CHAIN_MEMOS,
   CREATE_TRUST_LADDER_LOG,
   CREATE_ONBOARDING_SESSION,
+  CREATE_PAPER_POSITIONS,
 ] as const;

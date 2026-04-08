@@ -20,7 +20,7 @@ export const GenerateReferralLinkAction: Action = {
   },
   handler: async (_runtime: IAgentRuntime, message: Memory, _state, _options, callback): Promise<ActionResult | void | undefined> => {
     const botUsername = process.env.TELEGRAM_BOT_USERNAME ?? 'NostraBot';
-    const userId = message.userId ?? 'unknown';
+    const userId = (message as Memory & { userId?: string }).userId ?? 'unknown';
     const link = `t.me/${botUsername}?start=ref_${userId}`;
 
     if (callback) {

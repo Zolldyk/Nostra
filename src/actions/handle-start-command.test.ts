@@ -1,5 +1,7 @@
-import { afterEach, beforeEach, describe, expect, it, mock } from 'bun:test';
+import { afterEach, beforeEach, describe, expect, it, mock, spyOn } from 'bun:test';
 import type { Memory } from '@elizaos/core';
+import * as migrations from '../db/migrations.js';
+import { AgentStateService } from '../services/agent-state-service.js';
 import type { AgentState } from '../types/agent-state.js';
 
 type CallbackPayload = {
@@ -11,10 +13,11 @@ type CallbackPayload = {
 describe('HandleStartCommand', () => {
   let state: AgentState;
   let setStateCalls: Array<Partial<AgentState>>;
+  let getStateSpy: ReturnType<typeof spyOn>;
+  let setStateSpy: ReturnType<typeof spyOn>;
+  let getDbSpy: ReturnType<typeof spyOn>;
 
-  beforeEach(async () => {
-    const actualMigrations = await import('../db/migrations.js');
-
+  beforeEach(() => {
     state = {
       mode: 'paper',
       trustLadder: 'advisor',
@@ -27,24 +30,18 @@ describe('HandleStartCommand', () => {
     };
     setStateCalls = [];
 
-    mock.module('../services/agent-state-service.js', () => ({
-      AgentStateService: {
-        getState: () => ({ ...state }),
-        setState: async (update: Partial<AgentState>) => {
-          setStateCalls.push(update);
-          state = { ...state, ...update, updatedAt: new Date().toISOString() };
-        },
-      },
-    }));
-
-    mock.module('../db/migrations.js', () => ({
-      ...actualMigrations,
-      getDb: () => ({}),
-    }));
+    getStateSpy = spyOn(AgentStateService, 'getState').mockImplementation(() => ({ ...state }));
+    setStateSpy = spyOn(AgentStateService, 'setState').mockImplementation(async (update: Partial<AgentState>) => {
+      setStateCalls.push(update);
+      state = { ...state, ...update, updatedAt: new Date().toISOString() };
+    });
+    getDbSpy = spyOn(migrations, 'getDb').mockReturnValue({} as ReturnType<typeof migrations.getDb>);
   });
 
   afterEach(() => {
-    mock.restore();
+    getStateSpy.mockRestore();
+    setStateSpy.mockRestore();
+    getDbSpy.mockRestore();
   });
 
   it('validates /start case-insensitively', async () => {
@@ -65,7 +62,7 @@ describe('HandleStartCommand', () => {
 
     await HandleStartCommand.handler?.(
       {} as never,
-      { content: { text: '/start' } } as Memory,
+      { content: { text: '/start' }, roomId: 'chat-1' } as Memory,
       undefined,
       undefined,
       callback,
@@ -76,7 +73,10 @@ describe('HandleStartCommand', () => {
     expect(payload.text).toContain("Welcome. I'm Nostra");
     expect(payload.text).toContain('I am not a financial advisor.');
     expect(payload.text).toContain('Your money. Your rules. Your responsibility.');
-    expect(setStateCalls).toEqual([{ onboardingState: 'disclaimer_delivered' }]);
+    expect(setStateCalls).toEqual([
+      { onboardingState: 'disclaimer_delivered' },
+      { telegramChatId: 'chat-1' },
+    ]);
   });
 
   it('greets returning users without restarting onboarding', async () => {
@@ -103,6 +103,29 @@ describe('HandleStartCommand', () => {
     expect(payload.text).toContain('Your Constitution v2 is active.');
     expect(payload.text).not.toContain('I am not a financial advisor.');
     expect(setStateCalls).toHaveLength(0);
+  });
+
+  it('backfills telegramChatId for returning users when missing', async () => {
+    state = {
+      ...state,
+      constitutionVersion: 2,
+      accuracyScore: 85,
+      onboardingState: 'complete',
+      telegramChatId: undefined,
+    };
+    const { HandleStartCommand } = await import('./handle-start-command.js');
+    const callback = mock(async (_payload: CallbackPayload) => undefined);
+
+    await HandleStartCommand.handler?.(
+      {} as never,
+      { content: { text: '/start' }, roomId: 'chat-42' } as Memory,
+      undefined,
+      undefined,
+      callback,
+    );
+
+    expect(setStateCalls).toEqual([{ telegramChatId: 'chat-42' }]);
+    expect(callback).toHaveBeenCalledTimes(1);
   });
 
   it('re-sends the disclaimer when onboarding is in progress and no constitution exists', async () => {
