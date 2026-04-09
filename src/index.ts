@@ -15,6 +15,12 @@ import { SocraticOnboardingAction } from './actions/socratic-onboarding.js';
 import { ParseConstitutionAction } from './actions/parse-constitution.js';
 import { GenerateReferralLinkAction } from './actions/generate-referral-link.js';
 import { HandleProposalResponse } from './actions/handle-proposal-response.js';
+import { HandleWalletConnection } from './actions/handle-wallet-connection.js';
+import { DeliverExecutorPromotion } from './actions/deliver-executor-promotion.js';
+import { ExecuteRotation } from './actions/execute-rotation.js';
+import { FileDissent } from './actions/file-dissent.js';
+import { AmendConstitution, HandleAmendmentResponse } from './actions/amend-constitution.js';
+import { withComplianceGate } from './gates/with-compliance-gate.js';
 import { ConstitutionProvider } from './providers/constitution-provider.js';
 import { PortfolioProvider, warmPortfolioCache } from './providers/portfolio-provider.js';
 import { YieldRatesProvider } from './providers/yield-rates-provider.js';
@@ -54,6 +60,12 @@ const nostraPlugin: Plugin = {
     GenerateReferralLinkAction,
     LogDecisionOnChain,
     HandleProposalResponse,
+    DeliverExecutorPromotion,
+    HandleWalletConnection,
+    withComplianceGate(ExecuteRotation),
+    FileDissent,
+    AmendConstitution,
+    HandleAmendmentResponse,
   ],
   evaluators: [GradeSuggestionEvaluator, TrustLadderEvaluator, CrisisTriggerEvaluator],
 };

@@ -69,6 +69,27 @@ CREATE TABLE IF NOT EXISTS paper_positions (
   last_updated TEXT NOT NULL
 )`;
 
+export const CREATE_PENDING_DISSENTS = `
+CREATE TABLE IF NOT EXISTS pending_dissents (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  dissent_number INTEGER NOT NULL,
+  reasoning TEXT NOT NULL,
+  expected_outcome TEXT NOT NULL,
+  rule_ref TEXT,
+  status TEXT NOT NULL DEFAULT 'pending',
+  created_at TEXT NOT NULL
+)`;
+
+export const CREATE_REJECTED_AMENDMENTS = `
+CREATE TABLE IF NOT EXISTS rejected_amendments (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  rule_id INTEGER NOT NULL,
+  old_description TEXT NOT NULL,
+  new_description TEXT NOT NULL,
+  status TEXT NOT NULL DEFAULT 'pending',
+  created_at TEXT NOT NULL
+)`;
+
 export const ALL_SCHEMAS = [
   CREATE_AGENT_STATE,
   CREATE_CONSTITUTION,
@@ -77,4 +98,6 @@ export const ALL_SCHEMAS = [
   CREATE_TRUST_LADDER_LOG,
   CREATE_ONBOARDING_SESSION,
   CREATE_PAPER_POSITIONS,
+  CREATE_PENDING_DISSENTS,
+  CREATE_REJECTED_AMENDMENTS,
 ] as const;

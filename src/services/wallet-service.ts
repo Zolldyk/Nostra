@@ -4,6 +4,7 @@ import {
   Transaction,
   TransactionInstruction,
   PublicKey,
+  VersionedTransaction,
   sendAndConfirmTransaction,
 } from '@solana/web3.js';
 import bs58 from 'bs58';
@@ -110,6 +111,54 @@ class WalletServiceImpl {
 
     const explorerUrl = this.getExplorerUrl(txHash);
     return { txHash, explorerUrl };
+  }
+
+  async getBalance(): Promise<{ sol: number; publicKey: string }> {
+    if (!this.keypair || !this.connection) {
+      throw new Error('WalletService not initialised — call init() first');
+    }
+    const lamports = await this.connection.getBalance(this.keypair.publicKey);
+    const LAMPORTS_PER_SOL = 1_000_000_000;
+    return {
+      sol: lamports / LAMPORTS_PER_SOL,
+      publicKey: this.keypair.publicKey.toBase58(),
+    };
+  }
+
+  async signAndSubmit(tx: VersionedTransaction): Promise<{ txHash: string; explorerUrl: string }> {
+    if (!this.keypair || !this.connection) {
+      throw new Error('WalletService not initialised — call init() first');
+    }
+
+    // Sign the versioned transaction
+    tx.sign([this.keypair]);
+
+    // Get latest blockhash for confirmation strategy
+    const { blockhash, lastValidBlockHeight } = await this.connection.getLatestBlockhash('finalized');
+
+    // Submit raw transaction
+    const txHash = await this.connection.sendRawTransaction(tx.serialize(), {
+      skipPreflight: false,
+      preflightCommitment: 'confirmed',
+    });
+
+    // Confirm at finalized within 30s (NFR4)
+    const SWAP_CONFIRM_TIMEOUT_MS = 30_000;
+    const confirmTimeoutSignal = AbortSignal.timeout(SWAP_CONFIRM_TIMEOUT_MS);
+
+    await Promise.race([
+      this.connection.confirmTransaction(
+        { signature: txHash, blockhash, lastValidBlockHeight },
+        'finalized',
+      ),
+      new Promise<never>((_, reject) => {
+        confirmTimeoutSignal.addEventListener('abort', () =>
+          reject(new Error(`Swap confirmation exceeded ${SWAP_CONFIRM_TIMEOUT_MS}ms — halting execution (NFR4)`)),
+        );
+      }),
+    ]);
+
+    return { txHash, explorerUrl: this.getExplorerUrl(txHash) };
   }
 
   /** Validate memo text — used in tests and pre-flight checks */

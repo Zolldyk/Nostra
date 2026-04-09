@@ -85,6 +85,33 @@ class ConstitutionServiceImpl {
     rdb.prepare(`UPDATE constitution SET active = 1, version = 1 WHERE id = ?`).run(constitutionId);
   }
 
+  amendAndActivate(
+    db: DatabaseLike,
+    activeId: number,
+    currentVersion: number,
+    allRules: ConstitutionRule[],
+  ): number {
+    const rdb = db as ReadableDb;
+    const newVersion = currentVersion + 1;
+    const now = new Date().toISOString();
+
+    const result = rdb.prepare(
+      `INSERT INTO constitution (version, rules_json, created_at, active) VALUES (?, ?, ?, 1)`,
+    ).run(newVersion, JSON.stringify(allRules), now) as { lastInsertRowid: number };
+    const newId = Number(result.lastInsertRowid);
+
+    for (let i = 0; i < allRules.length; i++) {
+      rdb.prepare(
+        `INSERT INTO constitution_rules (constitution_id, rule_index, rule_json) VALUES (?, ?, ?)`,
+      ).run(newId, i, JSON.stringify(allRules[i]));
+    }
+
+    // Deactivate old — previous version row stays for history (FR7)
+    rdb.prepare(`UPDATE constitution SET active = 0 WHERE id = ?`).run(activeId);
+
+    return newVersion;
+  }
+
   getActive(db: DatabaseLike): { id: number; version: number; rules: ConstitutionRule[] } | null {
     const rdb = db as ReadableDb;
     const row = rdb.prepare(

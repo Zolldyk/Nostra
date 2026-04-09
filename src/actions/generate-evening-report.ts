@@ -32,6 +32,41 @@ interface PendingCountRow {
   count: number;
 }
 
+interface PendingDissentRow {
+  id: number;
+  dissent_number: number;
+  reasoning: string;
+  expected_outcome: string;
+  rule_ref: string | null;
+}
+
+interface RejectedAmendmentRow {
+  id: number;
+  rule_id: number;
+  old_description: string;
+  new_description: string;
+}
+
+function formatDissentSection(dissents: PendingDissentRow[]): string {
+  return dissents.map(d => {
+    const ruleNote = d.rule_ref ? `\nRelevant rule: ${d.rule_ref}` : '';
+    return (
+      `📋 Filed Dissent #${d.dissent_number}\n` +
+      `I obeyed. For the record:\n\n` +
+      `${d.reasoning}\n\n` +
+      `Expected outcome: ${d.expected_outcome}${ruleNote}`
+    );
+  }).join('\n\n---\n\n');
+}
+
+function formatRejectedAmendmentSection(amendments: RejectedAmendmentRow[]): string {
+  return amendments.map(a =>
+    `📋 Rejected Amendment — Rule #${a.rule_id}\n` +
+    `Proposed change: "${a.old_description}" → "${a.new_description}"\n` +
+    `You chose not to apply this amendment.`
+  ).join('\n\n---\n\n');
+}
+
 function buildEveningReportPrompt(
   memos: MemoRow[],
   date: string,
@@ -108,6 +143,28 @@ export async function generateEveningReport(runtime: IAgentRuntime): Promise<voi
 
   const hasPendingGrade = pendingCount > 0;
 
+  // Query pending dissents to inject into this report (AC2)
+  const pendingDissents = db.prepare(
+    `SELECT id, dissent_number, reasoning, expected_outcome, rule_ref
+     FROM pending_dissents WHERE status = 'pending' ORDER BY dissent_number ASC`
+  ).all() as PendingDissentRow[];
+
+  const dissentSection = pendingDissents.length > 0
+    ? formatDissentSection(pendingDissents) + '\n\n---\n\n'
+    : '';
+  let injectedDissentsDelivered = false;
+
+  // Query pending rejected amendments to note in this report (AC5)
+  const pendingRejectedAmendments = db.prepare(
+    `SELECT id, rule_id, old_description, new_description
+     FROM rejected_amendments WHERE status = 'pending' ORDER BY id ASC`
+  ).all() as RejectedAmendmentRow[];
+
+  const rejectedAmendmentSection = pendingRejectedAmendments.length > 0
+    ? formatRejectedAmendmentSection(pendingRejectedAmendments) + '\n\n---\n\n'
+    : '';
+  let injectedRejectedAmendmentsDelivered = false;
+
   // Call Qwen — fall back to static report on failure (AC4, NFR19)
   try {
     const reportBody = await (runtime as any).useModel(ModelType.TEXT_LARGE, {
@@ -115,7 +172,13 @@ export async function generateEveningReport(runtime: IAgentRuntime): Promise<voi
       temperature: 0.5,
     }) as string;
 
-    const fullReport = composeEveningReport(dateStr, reportBody);
+    const baseReport = composeEveningReport(dateStr, reportBody);
+    const fullReport = (dissentSection || rejectedAmendmentSection)
+      ? baseReport.replace(
+          /^(🌙 Bedtime Report — [^\n]+\n\n)/,
+          `$1${dissentSection}${rejectedAmendmentSection}`
+        )
+      : baseReport;
     await sendTelegramMessage(
       runtime,
       chatId,
@@ -129,6 +192,8 @@ export async function generateEveningReport(runtime: IAgentRuntime): Promise<voi
         },
       } : undefined,
     );
+    injectedDissentsDelivered = pendingDissents.length > 0;
+    injectedRejectedAmendmentsDelivered = pendingRejectedAmendments.length > 0;
   } catch {
     // AC4 fallback: deliver static report — no crash, no silent skip
     const fallback = buildFallbackReport(todayMemos, dateStr, state.accuracyScore, state.suggestionsSampled);
@@ -145,5 +210,21 @@ export async function generateEveningReport(runtime: IAgentRuntime): Promise<voi
         },
       } : undefined,
     );
+  }
+
+  // AC3: Mark dissents read only after they were actually injected into the delivered report.
+  if (injectedDissentsDelivered) {
+    const ids = pendingDissents.map(d => d.id);
+    db.prepare(
+      `UPDATE pending_dissents SET status = 'read' WHERE id IN (${ids.map(() => '?').join(',')})`
+    ).run(...ids);
+  }
+
+  // AC5: Mark rejected amendments as read after delivery
+  if (injectedRejectedAmendmentsDelivered) {
+    const ids = pendingRejectedAmendments.map(a => a.id);
+    db.prepare(
+      `UPDATE rejected_amendments SET status = 'read' WHERE id IN (${ids.map(() => '?').join(',')})`
+    ).run(...ids);
   }
 }

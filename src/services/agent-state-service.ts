@@ -1,4 +1,4 @@
-import type { AgentState, PendingProposal } from '../types/agent-state.js';
+import type { AgentState, PendingProposal, PendingAmendment } from '../types/agent-state.js';
 import type { DatabaseLike } from '../db/migrations.js';
 
 // Extend DatabaseLike with query support for reads
@@ -64,6 +64,16 @@ class AgentStateServiceImpl {
     this.state = {
       ...this.state,
       pendingProposal: proposal ? { ...proposal } : undefined,
+    };
+  }
+
+  setPendingAmendment(amendment: PendingAmendment | undefined): void {
+    if (!this.state) {
+      throw new Error('AgentStateService not initialised — call init() first');
+    }
+    this.state = {
+      ...this.state,
+      pendingAmendment: amendment ? { ...amendment } : undefined,
     };
   }
 

@@ -1,3 +1,14 @@
+import type { ConstitutionRule } from './constitution.js';
+
+export interface PendingAmendment {
+  ruleId: number;               // 1-indexed rule id being amended
+  oldRule: ConstitutionRule;    // original rule
+  newRule: ConstitutionRule;    // proposed replacement
+  constitutionId: number;       // DB id of the currently active constitution row
+  currentVersion: number;       // version number of the currently active constitution
+  allRules: ConstitutionRule[]; // full updated ruleset (old rules with amendment applied)
+}
+
 export interface PendingProposal {
   protocol: string;
   proposedApy: number;
@@ -19,5 +30,6 @@ export interface AgentState {
   promotionPending?: boolean;   // Set by TrustLadderEvaluator when 80% threshold crossed; cleared after Story 4.2 promotion
   telegramChatId?: string;      // Persisted on first /start — used by polling loop for proactive messages
   pendingProposal?: PendingProposal; // In-memory only — dedupe across polling ticks, never persisted
+  pendingAmendment?: PendingAmendment; // In-memory only — never persisted to SQLite
   updatedAt: string;            // ISO 8601 timestamp
 }
