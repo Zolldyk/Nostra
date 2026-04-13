@@ -70,4 +70,8 @@ export function run(db: DatabaseLike): void {
   } catch {
     // Column already exists — idempotent
   }
+  // Story 5.2: crisis_episodes table for Crisis Protocol audit trail + Storyteller context
+  // New table added to ALL_SCHEMAS — no ALTER needed
+  // Story 6.1: storyteller_chapters for chapter number tracking
+  // New table added to ALL_SCHEMAS — no ALTER needed
 }

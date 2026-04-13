@@ -9,6 +9,8 @@ import type { PendingProposal } from '../types/agent-state.js';
 import { buildMemoText } from '../actions/log-decision-on-chain.js';
 import * as migrations from '../db/migrations.js';
 import { WalletService } from '../services/wallet-service.js';
+import { withRetry } from '../utils/with-retry.js';
+import { executeCrisisFreeze } from '../actions/trigger-crisis-protocol.js';
 
 const POLL_INTERVAL_MS = 30_000;
 const YIELD_PROPOSAL_THRESHOLD = 5;
@@ -84,8 +86,8 @@ async function sendPaperNotification(rt: IAgentRuntime, chatId: string, text: st
 export async function runPollingTick(rt: IAgentRuntime): Promise<void> {
   const state = AgentStateService.getState();
 
-  // Only run in Paper mode — Live mode polling is Epic 4 scope
-  if (state.mode !== 'paper') return;
+  // Crisis detection must protect both Paper and Live modes.
+  // Only the advisor yield-opportunity branch remains Paper-only.
 
   // 0. 24h timeout check — BEFORE yield detection
   const pendingProposal = state.pendingProposal;
@@ -114,13 +116,16 @@ export async function runPollingTick(rt: IAgentRuntime): Promise<void> {
   // 1. Read portfolio snapshot (in-memory cache — no DB hit)
   getPaperPortfolioSnapshot();
 
-  // 2. Run CrisisTriggerEvaluator — stub returns immediately; full implementation in Story 5.1
+  // 2. Run CrisisTriggerEvaluator in both modes.
   await CrisisTriggerEvaluator.handler(rt, undefined as any, undefined as any, {}, undefined);
+
+  // Live mode does not run advisor proposal polling.
+  if (state.mode !== 'paper') return;
 
   // 3. Advisor Mode: check for yield opportunity
   if (state.trustLadder === 'advisor') {
     try {
-      const yieldResult = await YieldRatesProvider.get(rt, undefined as any, undefined as any);
+      const yieldResult = await withRetry(() => YieldRatesProvider.get(rt, undefined as any, undefined as any), 3, 5000);
       const yieldValues = (yieldResult.values ?? {}) as Record<string, unknown>;
       const failedProtocols = (yieldValues['failed_protocols'] as string[] | undefined) ?? [];
       const errorMessage = typeof yieldValues['errorMessage'] === 'string' ? yieldValues['errorMessage'] : '';
@@ -179,8 +184,14 @@ export async function runPollingTick(rt: IAgentRuntime): Promise<void> {
         }
       }
     } catch (err) {
-      // Never let provider errors crash the tick — log and continue
-      console.error('[PollingLoop] Yield provider error:', err instanceof Error ? err.message : String(err));
+      // All 3 withRetry attempts exhausted — trigger precautionary crisis freeze (NFR14)
+      const freshState = AgentStateService.getState();
+      if (freshState.crisisStatus === 'active') {
+        await executeCrisisFreeze(rt, {
+          crisisType: 'rpc_failure',
+          violationSummary: `Alchemy RPC sustained failure: ${err instanceof Error ? err.message.slice(0, 100) : 'unknown'}`,
+        });
+      }
     }
   }
 }

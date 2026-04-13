@@ -20,6 +20,7 @@ import { DeliverExecutorPromotion } from './actions/deliver-executor-promotion.j
 import { ExecuteRotation } from './actions/execute-rotation.js';
 import { FileDissent } from './actions/file-dissent.js';
 import { AmendConstitution, HandleAmendmentResponse } from './actions/amend-constitution.js';
+import { TriggerCrisisProtocol, EmergencyVote } from './actions/trigger-crisis-protocol.js';
 import { withComplianceGate } from './gates/with-compliance-gate.js';
 import { ConstitutionProvider } from './providers/constitution-provider.js';
 import { PortfolioProvider, warmPortfolioCache } from './providers/portfolio-provider.js';
@@ -66,6 +67,8 @@ const nostraPlugin: Plugin = {
     FileDissent,
     AmendConstitution,
     HandleAmendmentResponse,
+    TriggerCrisisProtocol,
+    EmergencyVote,
   ],
   evaluators: [GradeSuggestionEvaluator, TrustLadderEvaluator, CrisisTriggerEvaluator],
 };

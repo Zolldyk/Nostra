@@ -16,6 +16,7 @@
   "scripts": {
     "start": "elizaos start",
     "dev": "elizaos dev --character ./characters/agent.character.json",
+    "demo": "bun run inference-proxy.ts & sleep 2 && elizaos dev --character ./characters/agent.character.json",
     "build": "tsc",
     "test": "bun test --path-ignore-patterns dist/"
   },

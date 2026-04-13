@@ -1,5 +1,3 @@
-# syntax=docker/dockerfile:1
-
 FROM node:23-slim AS base
 
 RUN apt-get update && apt-get install -y \
@@ -17,7 +15,14 @@ RUN npm install -g bun
 
 # Copy package manifest and lockfile, install dependencies
 COPY package.json bun.lock* ./
-RUN bun install
+RUN bun install && \
+    find node_modules -name "*.md" -delete && \
+    find node_modules -name "*.map" -delete && \
+    find node_modules -name "CHANGELOG*" -delete && \
+    find node_modules -name "LICENSE*" -delete && \
+    find node_modules -name "*.test.js" -delete && \
+    find node_modules -name "*.spec.js" -delete && \
+    find node_modules -name ".github" -type d -exec rm -rf {} + 2>/dev/null || true
 
 # Copy all source files
 COPY . .

@@ -1,5 +1,20 @@
 import type { ConstitutionRule } from './constitution.js';
 
+export interface CrisisOption {
+  label: string;       // e.g., "A — Hold positions until rules amended"
+  tradeoff: string;    // plain-English risk/values explanation in message body
+}
+
+export interface PendingCrisisVote {
+  violationSummary: string;
+  crisisEpisodeId: number;  // DB id of the crisis_episodes row (written at briefing time)
+  options: {
+    a: CrisisOption;
+    b: CrisisOption;
+    c: CrisisOption;
+  };
+}
+
 export interface PendingAmendment {
   ruleId: number;               // 1-indexed rule id being amended
   oldRule: ConstitutionRule;    // original rule
@@ -31,5 +46,6 @@ export interface AgentState {
   telegramChatId?: string;      // Persisted on first /start — used by polling loop for proactive messages
   pendingProposal?: PendingProposal; // In-memory only — dedupe across polling ticks, never persisted
   pendingAmendment?: PendingAmendment; // In-memory only — never persisted to SQLite
+  pendingCrisisVote?: PendingCrisisVote;  // In-memory only — never persisted to SQLite
   updatedAt: string;            // ISO 8601 timestamp
 }

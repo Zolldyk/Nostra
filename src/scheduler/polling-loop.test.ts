@@ -6,7 +6,9 @@ import { YieldRatesProvider } from '../providers/yield-rates-provider.js';
 import * as portfolioProvider from '../providers/portfolio-provider.js';
 import * as migrations from '../db/migrations.js';
 import { WalletService } from '../services/wallet-service.js';
+import * as withRetryModule from '../utils/with-retry.js';
 import type { AgentState, PendingProposal } from '../types/agent-state.js';
+import * as crisisProtocol from '../actions/trigger-crisis-protocol.js';
 
 const MOCK_PAPER_STATE: AgentState = {
   mode: 'paper',
@@ -52,12 +54,14 @@ describe('polling-loop', () => {
   let yieldGetSpy: ReturnType<typeof spyOn>;
   let portfolioSnapshotSpy: ReturnType<typeof spyOn>;
   let setPendingProposalSpy: ReturnType<typeof spyOn>;
+  let executeCrisisFreezeSpy: ReturnType<typeof spyOn>;
 
   beforeEach(() => {
     crisisHandlerSpy = spyOn(CrisisTriggerEvaluator, 'handler').mockResolvedValue(undefined as never);
     yieldGetSpy = spyOn(YieldRatesProvider, 'get').mockResolvedValue(NO_YIELD_RESULT as never);
     portfolioSnapshotSpy = spyOn(portfolioProvider, 'getPaperPortfolioSnapshot').mockReturnValue([]);
     setPendingProposalSpy = spyOn(AgentStateService, 'setPendingProposal').mockImplementation((_proposal: PendingProposal | undefined) => undefined);
+    executeCrisisFreezeSpy = spyOn(crisisProtocol, 'executeCrisisFreeze').mockResolvedValue(undefined);
   });
 
   afterEach(() => {
@@ -66,6 +70,7 @@ describe('polling-loop', () => {
     yieldGetSpy.mockRestore();
     portfolioSnapshotSpy.mockRestore();
     setPendingProposalSpy.mockRestore();
+    executeCrisisFreezeSpy.mockRestore();
   });
 
   it('startPollingLoop returns an interval handle', async () => {
@@ -76,11 +81,12 @@ describe('polling-loop', () => {
     clearInterval(handle);
   });
 
-  it('polling tick skips when mode is not paper', async () => {
+  it('polling tick still runs CrisisTriggerEvaluator in live mode', async () => {
     const { runPollingTick } = await import('./polling-loop.js');
     getStateSpy = spyOn(AgentStateService, 'getState').mockReturnValue({ ...MOCK_LIVE_STATE });
     await runPollingTick({} as IAgentRuntime);
-    expect(crisisHandlerSpy).not.toHaveBeenCalled();
+    expect(crisisHandlerSpy).toHaveBeenCalledTimes(1);
+    expect(yieldGetSpy).not.toHaveBeenCalled();
   });
 
   it('polling tick calls CrisisTriggerEvaluator.handler in paper mode', async () => {
@@ -94,7 +100,18 @@ describe('polling-loop', () => {
     const { runPollingTick } = await import('./polling-loop.js');
     getStateSpy = spyOn(AgentStateService, 'getState').mockReturnValue({ ...MOCK_PAPER_STATE });
     yieldGetSpy.mockRejectedValue(new Error('Provider network failure'));
+    // Mock withRetry to avoid real delays and mock crisis freeze deps
+    const withRetrySpy = spyOn(withRetryModule, 'withRetry').mockImplementation(async (fn: () => Promise<unknown>) => fn());
+    const setStateSpy = spyOn(AgentStateService, 'setState').mockResolvedValue(undefined);
+    const getDbSpy = spyOn(migrations, 'getDb').mockReturnValue({ prepare: () => ({ run: () => {} }) } as any);
+    const writeMemoSpy = spyOn(WalletService, 'writeMemo').mockResolvedValue({ txHash: 'tx1', explorerUrl: 'url1' } as any);
+
     await expect(runPollingTick({} as IAgentRuntime)).resolves.toBeUndefined();
+
+    withRetrySpy.mockRestore();
+    setStateSpy.mockRestore();
+    getDbSpy.mockRestore();
+    writeMemoSpy.mockRestore();
   });
 
   it('polling tick does not send duplicate proposals for same opportunity', async () => {
@@ -222,5 +239,23 @@ describe('polling-loop', () => {
     expect(sendMessageMock).toHaveBeenCalledTimes(1);
     expect(sendMessageMock.mock.calls[0]?.[1]).toContain('✈️ PAPER TREASURY SIMULATION');
     expect(sendMessageMock.mock.calls[0]?.[1]).toContain('Yield API unavailable: kamino');
+  });
+
+  it('polling tick triggers rpc_failure freeze even when telegramChatId is missing', async () => {
+    const { runPollingTick } = await import('./polling-loop.js');
+    getStateSpy = spyOn(AgentStateService, 'getState').mockReturnValue({
+      ...MOCK_PAPER_STATE,
+      telegramChatId: undefined,
+    });
+    const withRetrySpy = spyOn(withRetryModule, 'withRetry').mockRejectedValue(new Error('RPC exhausted'));
+
+    await runPollingTick({} as IAgentRuntime);
+
+    expect(executeCrisisFreezeSpy).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ crisisType: 'rpc_failure' }),
+    );
+
+    withRetrySpy.mockRestore();
   });
 });

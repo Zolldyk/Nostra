@@ -12,22 +12,28 @@
         ],
         "env": {
           "OPENAI_API_KEY": "nosana",
-          "OPENAI_API_URL": "https://4ksj3tve5bazqwkuyqdhwdpcar4yutcuxphwhckrdxmu.node.k8s.prd.nos.ci/v1",
-          "MODEL_NAME": "Qwen/Qwen3.5-4B",
+          "OPENAI_BASE_URL": "https://5i8frj7ann99bbw9gzpprvzj2esugg39hxbb4unypskq.node.k8s.prd.nos.ci/v1",
+          "OPENAI_LARGE_MODEL": "gemma4:26b",
+          "OPENAI_SMALL_MODEL": "gemma4:26b",
+          "OPENAI_EMBEDDING_URL": "https://4yiccatpyxx773jtewo5ccwhw1s2hezq5pehndb6fcfq.node.k8s.prd.nos.ci/v1",
+          "OPENAI_EMBEDDING_API_KEY": "nosana",
+          "OPENAI_EMBEDDING_MODEL": "Qwen3-Embedding-0.6B",
+          "OPENAI_EMBEDDING_DIMENSIONS": "1024",
           "SERVER_PORT": "3000",
           "SOLANA_NETWORK": "devnet",
           "SQLITE_PATH": "/app/data/nostra.db",
           "NODE_ENV": "production",
           "TELEGRAM_BOT_TOKEN": "$TELEGRAM_BOT_TOKEN",
           "SOLANA_PRIVATE_KEY": "$SOLANA_PRIVATE_KEY",
-          "ALCHEMY_RPC_URL": "$ALCHEMY_RPC_URL",
+          "ALCHEMY_RPC_URL_DEVNET": "$ALCHEMY_RPC_URL_DEVNET",
+          "ALCHEMY_RPC_URL_MAINNET": "$ALCHEMY_RPC_URL_MAINNET",
           "NOSANA_API_KEY": "$NOSANA_API_KEY"
         }
       }
     }
   ],
   "version": "0.1",
-"meta": {
-  "market": "nvidia-4090"
-}
+  "meta": {
+    "market": "nvidia-4090"
+  }
 }

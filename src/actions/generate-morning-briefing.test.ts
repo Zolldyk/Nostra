@@ -1,8 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, mock, spyOn } from 'bun:test';
 import type { IAgentRuntime } from '@elizaos/core';
 import { AgentStateService } from '../services/agent-state-service.js';
+import { ConstitutionService } from '../services/constitution-service.js';
+import * as nosanaComputeService from '../services/nosana-compute-service.js';
 import * as portfolioProvider from '../providers/portfolio-provider.js';
 import * as yieldRatesProvider from '../providers/yield-rates-provider.js';
+import * as migrations from '../db/migrations.js';
 import { generateMorningBriefing } from './generate-morning-briefing.js';
 
 function makeState(overrides: Partial<ReturnType<typeof AgentStateService.getState>>) {
@@ -51,6 +54,9 @@ describe('generateMorningBriefing', () => {
   let getStateSpy: ReturnType<typeof spyOn>;
   let getSnapshotSpy: ReturnType<typeof spyOn>;
   let yieldGetSpy: ReturnType<typeof spyOn>;
+  let getActiveSpy: ReturnType<typeof spyOn>;
+  let getDbSpy: ReturnType<typeof spyOn>;
+  let fetchMonthlyComputeCostSpy: ReturnType<typeof spyOn>;
 
   const MOCK_YIELD_RESULT = {
     values: { kamino_apy: 6.5, marginfi_apy: 7.25, drift_apy: 5.0 },
@@ -59,12 +65,21 @@ describe('generateMorningBriefing', () => {
   beforeEach(() => {
     getSnapshotSpy = spyOn(portfolioProvider, 'getPaperPortfolioSnapshot').mockReturnValue([]);
     yieldGetSpy = spyOn(yieldRatesProvider.YieldRatesProvider, 'get').mockResolvedValue(MOCK_YIELD_RESULT as any);
+    getDbSpy = spyOn(migrations, 'getDb').mockReturnValue({} as any);
+    getActiveSpy = spyOn(ConstitutionService, 'getActive').mockReturnValue(null);
+    fetchMonthlyComputeCostSpy = spyOn(nosanaComputeService, 'fetchMonthlyComputeCost').mockResolvedValue({
+      spentNos: 12.5,
+      monthLabel: 'April 2026',
+    });
   });
 
   afterEach(() => {
     getStateSpy?.mockRestore();
     getSnapshotSpy.mockRestore();
     yieldGetSpy.mockRestore();
+    getActiveSpy.mockRestore();
+    getDbSpy.mockRestore();
+    fetchMonthlyComputeCostSpy.mockRestore();
   });
 
   it('exits silently when mode is not "paper"', async () => {
@@ -162,5 +177,121 @@ describe('generateMorningBriefing', () => {
     expect(rt._sentMessages).toHaveLength(2);
     expect(rt._sentMessages[1]).toContain('AI briefing unavailable');
     expect(rt._sentMessages[1]).toContain('Yield Landscape');
+  });
+
+  it('includes compute cost line in briefing prompt when compute_budget rule is active and API succeeds', async () => {
+    getStateSpy = spyOn(AgentStateService, 'getState').mockReturnValue(makeState({}));
+    getActiveSpy.mockReturnValue({
+      id: 1,
+      version: 1,
+      rules: [
+        {
+          id: 4,
+          type: 'compute_budget',
+          description: 'Monthly Nosana compute spend must not exceed 50 NOS',
+          condition: { metric: 'compute_cost_nos', operator: '<', value: 50, unit: 'nos_tokens' },
+          action: 'alert',
+        },
+      ],
+    } as any);
+    const rt = makeMockRuntime(makeWordyBriefing(120));
+
+    await generateMorningBriefing(rt);
+
+    const resolvedPrompt = (rt.useModel as any).mock.calls[0][1].prompt as string;
+    expect(resolvedPrompt).toContain('NOS compute (April 2026): 12.5 / 50 NOS (25%)');
+  });
+
+  it('includes ⚠️ warning when NOS usage exceeds 80% of budget ceiling', async () => {
+    getStateSpy = spyOn(AgentStateService, 'getState').mockReturnValue(makeState({}));
+    getActiveSpy.mockReturnValue({
+      id: 1,
+      version: 1,
+      rules: [
+        {
+          id: 4,
+          type: 'compute_budget',
+          description: 'Monthly Nosana compute spend must not exceed 50 NOS',
+          condition: { metric: 'compute_cost_nos', operator: '<', value: 50, unit: 'nos_tokens' },
+          action: 'alert',
+        },
+      ],
+    } as any);
+    fetchMonthlyComputeCostSpy.mockResolvedValue({ spentNos: 45, monthLabel: 'April 2026' });
+    const rt = makeMockRuntime(makeWordyBriefing(120));
+
+    await generateMorningBriefing(rt);
+
+    expect(rt._sentMessages[1]).toContain('NOS compute (April 2026): 45.0 / 50 NOS (90%)');
+    expect(rt._sentMessages[1]).toContain('⚠️ NOS compute approaching ceiling: 90% used');
+  });
+
+  it('injects the compute cost line into the delivered briefing body when API succeeds', async () => {
+    getStateSpy = spyOn(AgentStateService, 'getState').mockReturnValue(makeState({}));
+    getActiveSpy.mockReturnValue({
+      id: 1,
+      version: 1,
+      rules: [
+        {
+          id: 4,
+          type: 'compute_budget',
+          description: 'Monthly Nosana compute spend must not exceed 50 NOS',
+          condition: { metric: 'compute_cost_nos', operator: '<', value: 50, unit: 'nos_tokens' },
+          action: 'alert',
+        },
+      ],
+    } as any);
+    const rt = makeMockRuntime(makeWordyBriefing(120));
+
+    await generateMorningBriefing(rt);
+
+    expect(rt._sentMessages[1]).toContain('NOS compute (April 2026): 12.5 / 50 NOS (25%)');
+  });
+
+  it('sends cost-unavailable notification and delivers briefing without cost line when API throws (AC2)', async () => {
+    getStateSpy = spyOn(AgentStateService, 'getState').mockReturnValue(makeState({}));
+    getActiveSpy.mockReturnValue({
+      id: 1,
+      version: 1,
+      rules: [
+        {
+          id: 4,
+          type: 'compute_budget',
+          description: 'Monthly Nosana compute spend must not exceed 50 NOS',
+          condition: { metric: 'compute_cost_nos', operator: '<', value: 50, unit: 'nos_tokens' },
+          action: 'alert',
+        },
+      ],
+    } as any);
+    fetchMonthlyComputeCostSpy.mockRejectedValue(new Error('Nosana unavailable'));
+    const rt = makeMockRuntime(makeWordyBriefing(120));
+
+    await generateMorningBriefing(rt);
+
+    expect(rt._sentMessages).toHaveLength(3);
+    expect(rt._sentMessages[1]).toContain('⚠️ NOS compute cost unavailable');
+    expect(rt._sentMessages[2]).not.toContain('NOS compute (');
+  });
+
+  it('skips compute cost entirely when no compute_budget rule exists in active constitution', async () => {
+    getStateSpy = spyOn(AgentStateService, 'getState').mockReturnValue(makeState({}));
+    getActiveSpy.mockReturnValue({
+      id: 1,
+      version: 1,
+      rules: [
+        {
+          id: 1,
+          type: 'yield_threshold',
+          description: 'Require a 3% APY delta',
+          condition: { metric: 'yield_delta', operator: '>=', value: 3, unit: 'apy_points' },
+          action: 'alert',
+        },
+      ],
+    } as any);
+    const rt = makeMockRuntime(makeWordyBriefing(120));
+
+    await generateMorningBriefing(rt);
+
+    expect(fetchMonthlyComputeCostSpy).not.toHaveBeenCalled();
   });
 });

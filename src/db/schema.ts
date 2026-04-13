@@ -90,6 +90,28 @@ CREATE TABLE IF NOT EXISTS rejected_amendments (
   created_at TEXT NOT NULL
 )`;
 
+export const CREATE_CRISIS_EPISODES = `
+CREATE TABLE IF NOT EXISTS crisis_episodes (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  violation_summary TEXT NOT NULL,
+  option_a_label TEXT NOT NULL,
+  option_b_label TEXT NOT NULL,
+  option_c_label TEXT NOT NULL,
+  chosen_option TEXT,
+  resolution_memo_hash TEXT,
+  status TEXT NOT NULL DEFAULT 'open',
+  created_at TEXT NOT NULL,
+  resolved_at TEXT
+)`;
+
+export const CREATE_STORYTELLER_CHAPTERS = `
+CREATE TABLE IF NOT EXISTS storyteller_chapters (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  chapter_num INTEGER NOT NULL,
+  title TEXT NOT NULL,
+  created_at TEXT NOT NULL
+)`;
+
 export const ALL_SCHEMAS = [
   CREATE_AGENT_STATE,
   CREATE_CONSTITUTION,
@@ -100,4 +122,6 @@ export const ALL_SCHEMAS = [
   CREATE_PAPER_POSITIONS,
   CREATE_PENDING_DISSENTS,
   CREATE_REJECTED_AMENDMENTS,
+  CREATE_CRISIS_EPISODES,
+  CREATE_STORYTELLER_CHAPTERS,
 ] as const;

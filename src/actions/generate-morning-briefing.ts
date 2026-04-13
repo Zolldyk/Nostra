@@ -1,9 +1,12 @@
 import type { IAgentRuntime } from '@elizaos/core';
 import { ModelType } from '@elizaos/core';
 import { AgentStateService } from '../services/agent-state-service.js';
+import { ConstitutionService } from '../services/constitution-service.js';
+import { fetchMonthlyComputeCost } from '../services/nosana-compute-service.js';
 import { getPaperPortfolioSnapshot } from '../providers/portfolio-provider.js';
 import { YieldRatesProvider } from '../providers/yield-rates-provider.js';
 import { prependPaperPrefix } from '../utils/paper-prefix.js';
+import * as migrations from '../db/migrations.js';
 
 type RuntimeWithClients = IAgentRuntime & {
   clients?: Array<{
@@ -30,16 +33,22 @@ function buildMorningBriefingPrompt(
   marginfiApy: number,
   driftApy: number,
   date: string,
+  computeCostLine = '',
+  computeWarning = '',
 ): string {
   const positionSummary = positions.length > 0
     ? positions.map(p => `${p.protocol}: ${p.symbol} $${p.amount_usd.toFixed(0)} (${p.percentage}%)`).join(', ')
     : 'No positions yet — treasury undeployed';
+  const computePart = computeCostLine
+    ? `\nCompute (Nosana): ${computeCostLine}${computeWarning ? `. ${computeWarning}` : ''}. Include this line verbatim in the briefing body.\n`
+    : '';
 
   return (
     `You are Nostra, a constitutional financial advisor delivering the morning State of the Treasury briefing.\n\n` +
     `Date: ${date}\n` +
     `Current portfolio: ${positionSummary}\n` +
-    `Live yield rates — Kamino: ${kaminoApy.toFixed(2)}%, Marginfi: ${marginfiApy.toFixed(2)}%, Drift: ${driftApy.toFixed(2)}%\n\n` +
+    `Live yield rates — Kamino: ${kaminoApy.toFixed(2)}%, Marginfi: ${marginfiApy.toFixed(2)}%, Drift: ${driftApy.toFixed(2)}%\n` +
+    `${computePart}\n` +
     `Write the morning briefing body (100–200 words). Strict rules:\n` +
     `- CFO tone: forward-looking, analytical, confident — never reflective or sentimental\n` +
     `- Sentence 1: summarise current positions\n` +
@@ -59,6 +68,8 @@ function buildFallbackBriefing(
   driftApy: number,
   date: string,
   yieldDataAvailable = true,
+  computeCostLine = '',
+  computeWarning = '',
 ): string {
   const rates = [
     { protocol: 'Kamino', apy: kaminoApy },
@@ -77,11 +88,14 @@ function buildFallbackBriefing(
   const guidanceText = yieldDataAvailable
     ? 'Review your constitution rules before the market opens.'
     : 'Yield APIs are temporarily unavailable, so review your constitution rules before the market opens.';
+  const computeText = computeCostLine ? `${computeCostLine}. ` : '';
+  const warningText = computeWarning ? `${computeWarning}. ` : '';
 
   return (
     `☀️ State of the Treasury — ${date}\n\n` +
     `AI briefing unavailable. Portfolio: ${positionText}. ` +
     `Yield Landscape: ${yieldText}. ` +
+    `${computeText}${warningText}` +
     `${guidanceText}\n\n` +
     `🫡 Nostra`
   );
@@ -93,6 +107,18 @@ function countWords(text: string): number {
     .split(/\s+/)
     .filter(Boolean)
     .length;
+}
+
+function injectComputeSection(briefingBody: string, computeCostLine: string, computeWarning: string): string {
+  const extras = [computeCostLine, computeWarning].filter(Boolean).join('\n');
+  if (!extras) return briefingBody.trim();
+
+  const trimmed = briefingBody.trim();
+  const signoff = '\n\n🫡 Nostra';
+  if (trimmed.endsWith(signoff)) {
+    return `${trimmed.slice(0, -signoff.length)}\n\n${extras}${signoff}`;
+  }
+  return `${trimmed}\n\n${extras}`;
 }
 
 export async function generateMorningBriefing(runtime: IAgentRuntime): Promise<void> {
@@ -112,6 +138,8 @@ export async function generateMorningBriefing(runtime: IAgentRuntime): Promise<v
   let marginfiApy = 0;
   let driftApy = 0;
   let yieldDataAvailable = true;
+  let computeCostLine = '';
+  let computeWarning = '';
 
   try {
     const yieldResult = await YieldRatesProvider.get(runtime, undefined as any, undefined as any);
@@ -123,6 +151,28 @@ export async function generateMorningBriefing(runtime: IAgentRuntime): Promise<v
     yieldDataAvailable = false;
   }
 
+  const db = migrations.getDb();
+  const constitution = ConstitutionService.getActive(db);
+  const computeRule = constitution?.rules.find(r => r.type === 'compute_budget');
+
+  if (computeRule) {
+    try {
+      const { spentNos, monthLabel } = await fetchMonthlyComputeCost();
+      const budget = computeRule.condition.value;
+      const pct = Math.round((spentNos / budget) * 100);
+      computeCostLine = `NOS compute (${monthLabel}): ${spentNos.toFixed(1)} / ${budget} NOS (${pct}%)`;
+      if (pct > 80) {
+        computeWarning = `⚠️ NOS compute approaching ceiling: ${pct}% used`;
+      }
+    } catch {
+      await sendTelegramMessage(
+        runtime,
+        chatId,
+        prependPaperPrefix('⚠️ NOS compute cost unavailable — Nosana API unreachable')
+      );
+    }
+  }
+
   // Call Qwen — fall back to static briefing on failure (AC4, NFR19)
   try {
     if (!yieldDataAvailable) {
@@ -130,7 +180,7 @@ export async function generateMorningBriefing(runtime: IAgentRuntime): Promise<v
     }
 
     const briefingBody = await (runtime as any).useModel(ModelType.TEXT_LARGE, {
-      prompt: buildMorningBriefingPrompt(positions, kaminoApy, marginfiApy, driftApy, dateStr),
+      prompt: buildMorningBriefingPrompt(positions, kaminoApy, marginfiApy, driftApy, dateStr, computeCostLine, computeWarning),
       temperature: 0.4,
     }) as string;
 
@@ -139,12 +189,22 @@ export async function generateMorningBriefing(runtime: IAgentRuntime): Promise<v
       throw new Error(`Morning briefing length out of bounds: ${wordCount} words`);
     }
 
+    const deliveredBody = injectComputeSection(briefingBody, computeCostLine, computeWarning);
     // Compose full message with ☀️ header (caller adds ✈️ via prependPaperPrefix)
-    const fullBriefing = `☀️ State of the Treasury — ${dateStr}\n\n${briefingBody.trim()}`;
+    const fullBriefing = `☀️ State of the Treasury — ${dateStr}\n\n${deliveredBody}`;
     await sendTelegramMessage(runtime, chatId, prependPaperPrefix(fullBriefing));
   } catch {
     // AC4 fallback: deliver static briefing — no crash, no silent skip
-    const fallback = buildFallbackBriefing(positions, kaminoApy, marginfiApy, driftApy, dateStr, yieldDataAvailable);
+    const fallback = buildFallbackBriefing(
+      positions,
+      kaminoApy,
+      marginfiApy,
+      driftApy,
+      dateStr,
+      yieldDataAvailable,
+      computeCostLine,
+      computeWarning,
+    );
     await sendTelegramMessage(runtime, chatId, prependPaperPrefix(fallback));
   }
 }
