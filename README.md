@@ -4,7 +4,7 @@
 
 > **Your rules. Your chain. Your agent.**
 
-[![Live on Nosana](https://img.shields.io/badge/Live%20on%20Nosana-RTX%204090-14C9A0?style=flat-square)](https://3FZ2EyGUSy3ehMXtANL7ZC3Rx29YNcp1HtnuPSe3mV4F.node.k8s.prd.nos.ci)
+[![Live on Nosana](https://img.shields.io/badge/Live%20on%20Nosana-RTX%204090-14C9A0?style=flat-square)](https://X7DxZkTwUxrL3rxipvzu9QaZfQDBqqo5Aw2LinUCchGs.node.k8s.prd.nos.ci)
 [![Telegram Bot](https://img.shields.io/badge/Telegram-@zoll__arb__bot-2CA5E0?style=flat-square&logo=telegram)](https://t.me/zoll_arb_bot)
 [![Branch](https://img.shields.io/badge/branch-elizaos--challenge-E8B86D?style=flat-square)](https://github.com/Zolldyk/Nostra/tree/elizaos-challenge)
 
@@ -68,8 +68,8 @@ Nostra is deployed on Nosana's decentralized GPU network using the pre-built Doc
 
 **Docker Hub image:** `zolldyck/nostra:latest` (linux/amd64)
 **GPU market:** `nvidia-rtx-4090`
-**Live job ID:** `9g6vVGjzJyjPzJQNXHsrV9YcdRoyjRpfZUBwZYmhFjQF`
-**Live endpoint:** `https://3FZ2EyGUSy3ehMXtANL7ZC3Rx29YNcp1HtnuPSe3mV4F.node.k8s.prd.nos.ci`
+**Live transaction:** `23452uh6BbnEJacVEfKmFdcKUQFUEtk2mV48v5FmQjvyL4W6RtZCjdbzFV4DkavSkPaatXEVrFHsqvgojquG4fpY` finalized
+**Live endpoint:** `https://X7DxZkTwUxrL3rxipvzu9QaZfQDBqqo5Aw2LinUCchGs.node.k8s.prd.nos.ci`
 
 ### Deploy Your Own Instance
 
@@ -196,7 +196,7 @@ V1 is a single-container job. V2 distributes: dedicated inference node (GPU), ag
 **Submission:** [superteam.fun/earn/listing/nosana-builders-elizaos-challenge/](https://superteam.fun/earn/listing/nosana-builders-elizaos-challenge/)
 
 - GitHub fork: [github.com/Zolldyk/Nostra](https://github.com/Zolldyk/Nostra) (branch: `elizaos-challenge`)
-- Live Nosana URL: `https://3FZ2EyGUSy3ehMXtANL7ZC3Rx29YNcp1HtnuPSe3mV4F.node.k8s.prd.nos.ci`
+- Live Nosana URL: `https://X7DxZkTwUxrL3rxipvzu9QaZfQDBqqo5Aw2LinUCchGs.node.k8s.prd.nos.ci`
 - Telegram bot: [@zoll_arb_bot](https://t.me/zoll_arb_bot)
 
 ---
